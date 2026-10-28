@@ -6,7 +6,7 @@ Researched 2026-10-28. Every entry below was confirmed by opening the npm regist
 
 **Partial equivalent exists, and it is one project: [`youmightnotneed`](https://github.com/jomaendle/youmightnotneed) (CLI + MCP server + agent skill + site, MIT, v0.4.0, published 2026-10-07).**
 
-It does the package→feature mapping (85 curated rules, Baseline tier derived from `web-features`, gzipped size per package, "keep it if" conditions per rule) but it does **not** do the two things our audit is built around:
+It does the package→feature mapping (80 curated rules, Baseline tier derived from `web-features`, gzipped size per package, "keep it if" conditions per rule) but it does **not** do the two things our audit is built around:
 
 1. **Audience gating.** Its detection is a pure function of `package.json`. No repo read, no `browserslist` resolution. `packages/catalog/src/` contains no `node:fs` import and no `browserslist` reference (verified by cloning the repo and grepping). Gating is delegated to the human/agent as prose: ["Where a project states its own support target … that target wins over the tier"](https://github.com/jomaendle/youmightnotneed/blob/main/skills/youmightnotneed/references/reading-a-finding.md).
 2. **Usage-signal check.** No grep for library-specific API surface (`axios.interceptors`, `onUploadProgress`). Its own README says *"A dependency in package.json is not proof of what it is used for"* and answers that with hand-written conditions, not code inspection.
@@ -21,8 +21,8 @@ Nobody else joins dependency mapping to a resolved browser target set either. Th
 
 | # | Tool | What it actually does | Mapping | Gating | Usage | Popularity (week of 2026-10-21) | License | Last release |
 |---|---|---|---|---|---|---|---|---|
-| 1 | [youmightnotneed](https://github.com/jomaendle/youmightnotneed) | CLI/MCP/skill/site: reads `package.json`, matches package names against 85 rules, reports native replacement + Baseline tier + "keep it if" conditions + "up to N kB" | **yes** | **no** (manual, prose) | **partial** (agent told to grep call sites; no automation) | npm `youmightnotneed` 5/wk; repo 0★ | MIT | 0.4.0, 2026-10-07 |
-| 2 | [e18e/module-replacements](https://github.com/e18e/module-replacements) (`module-replacements`) | Data manifest of modules → native/preferred replacement, each native entry carrying a `webFeatureId` + BCD compat key | **yes** | no | no | npm 1,055,956/wk; 1,014★ | MIT | pushed 2026-10-26 |
+| 1 | [youmightnotneed](https://github.com/jomaendle/youmightnotneed) | CLI/MCP/skill/site: reads `package.json`, matches package names against 80 rules, reports native replacement + Baseline tier + "keep it if" conditions + "up to N kB" | **yes** (80 rules) | **no** (manual, prose) | **partial** (agent told to grep call sites; no automation) | npm `youmightnotneed` 5/wk; repo 0★ | MIT | 0.4.0, 2026-10-07 |
+| 2 | [e18e/module-replacements](https://github.com/e18e/module-replacements) (`module-replacements`) | Data manifest of modules → native/preferred replacement, each native entry carrying a `webFeatureId` + BCD compat key | **yes** (manifest also carries per-engine `minVersion`) | no | no | npm 1,055,956/wk; 1,014★ | MIT | pushed 2026-10-26 |
 | 3 | [@e18e/eslint-plugin](https://github.com/e18e/eslint-plugin) / [eslint-plugin-depend](https://github.com/es-tooling/eslint-plugin-depend) | `ban-dependencies` flags imports and `package.json` entries using the manifests above; suggests replacement | **yes** (via manifest) | no (only Node engine ranges) | **partial** (import presence, not API usage) | npm 793,347/wk and 353,642/wk | MIT | pushed 2026-10-27 / 2026-08-04 |
 | 4 | [You-Dont-Need-Lodash-Underscore](https://github.com/you-dont-need/You-Dont-Need-Lodash-Underscore) (`eslint-plugin-you-dont-need-lodash-underscore`) | Per-call-site rule pairing lodash/underscore methods with native equivalents (`_.assign` → `Object.assign`) | **partial** (two libs, method→method) | no | **yes** (AST call sites) | npm 350,545/wk; 19,117★ | MIT | 6.14.0, 2024-04-03 |
 | 5 | [eslint-plugin-unicorn](https://github.com/sindresorhus/eslint-plugin-unicorn) | Individual `prefer-*` rules encode native swaps (`prefer-structured-clone`, `prefer-date-now`, `prefer-blob-readable-stream`, …) | **partial** (per-API, no dep awareness) | no | **yes** | npm 7,874,718/wk | MIT | actively pushed |
@@ -93,6 +93,17 @@ These are complements to us, not substitutes: they catch what you wrote, we catc
 ### 19–21. Size tooling is infrastructure, not competition
 
 Bundlephobia is an API (`GET https://bundlephobia.com/api/size?package=axios@1.7.7` → `{"size":35049,"gzip":13902,…}`), not an auditor. `pkg-size.dev` and Package Phobia measure install/bundle weight. `size-limit`, `vite-bundle-visualizer`, `source-map-explorer` measure *your* output against budgets. None of them knows what a package does.
+
+### Correction, verified directly in the tarball (2026-10-28)
+
+`npm pack module-replacements@3.4.0` then reading `package/manifests/native.json`:
+
+- 205 `replacements`, 153 carrying `webFeatureId: { featureId, compatKey }`.
+- Each entry also carries `engines: [{ engine, minVersion }]` — the same per-browser floor our gate compares against.
+- `manifests/preferred.json` (175 entries) and `manifests/micro-utilities.json` (105) cover non-platform and micro-utility swaps.
+- `youmightnotneed` rule files counted with `grep -o 'id: "[a-z0-9-]*"' packages/catalog/src/rules/*.ts | wc -l` → **80**, not 85.
+
+Consequence for this repo: the mapping table is commodity data available weekly, including support floors. Only the join (§G1–§G5) is defensible.
 
 ## Gaps nobody covers
 
