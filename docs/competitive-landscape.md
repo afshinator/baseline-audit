@@ -98,10 +98,10 @@ Bundlephobia is an API (`GET https://bundlephobia.com/api/size?package=axios@1.7
 
 `npm pack module-replacements@3.4.0` then reading `package/manifests/native.json`:
 
-- 205 `replacements`, 153 carrying `webFeatureId: { featureId, compatKey }`.
-- Each entry also carries `engines: [{ engine, minVersion }]` — the same per-browser floor our gate compares against.
+- `replacements` is an **object keyed by id**, 205 entries; 153 carry `webFeatureId: { featureId, compatKey }`.
+- **187 of 205** carry `engines: [{ engine, minVersion }]` — the same per-browser floor our gate compares against. Not all of them.
 - `manifests/preferred.json` (175 entries) and `manifests/micro-utilities.json` (105) cover non-platform and micro-utility swaps.
-- `youmightnotneed` rule count: 81 published rule pages (live `llms.txt`, 2026-10-28) and 80 rule ids in source (`grep -o 'id: "[a-z0-9-]*"' packages/catalog/src/rules/*.ts | wc -l`). The earlier `grep -c '^- \['` figure of 85 was a bad proxy — it counted link lines in `llms.txt`, not rules.
+- `youmightnotneed` rule count: 81 published rule pages (live `llms.txt`, 2026-10-28) and 82 rule ids in source (`grep -ohE 'id: "[a-z0-9-]+"' packages/catalog/src/rules/*.ts | sort -u | wc -l`). The earlier `grep -c '^- \['` figure of 85 was a bad proxy — it counted link lines in `llms.txt`, not rules.
 
 Consequence for this repo: the mapping table is commodity data available weekly, including support floors. Only the join (§G1–§G5) is defensible.
 
@@ -112,8 +112,8 @@ The join is unclaimed, but unclaimed does not mean valuable in every case. Recom
 - 45 mapped packages carry feature data; 25 pass Baseline-Widely targets.
 - Against a chrome 100 / safari 15 floor, **11 of 45** verdicts flip versus a Baseline-Widely run: `axios`, `a11y-dialog`, `focus-trap`, `focus-trap-react`, `body-scroll-lock`, `react-modal`, `@radix-ui/react-dialog`, `lodash.clonedeep`, `clone-deep`, `lodash.groupby`, `smoothscroll-polyfill`. A chrome 87 / safari 14 floor produces the identical 11.
 - Against Baseline-Widely targets the gate flips **0 of 45** by construction.
-- Of **32** public repos probed (`raw.githubusercontent.com/<repo>/HEAD/{package.json,.browserslistrc}`), **6 declare a browserslist config** and 28 ship a lockfile. 16 have at least one mapped dependency.
-  - Legacy floors: `jellyfin/jellyfin-web` (`Chrome 27 … Edge 18, iOS > 10, Firefox ESR` → chrome 27 / edge 18 / ios_saf 10.3) and `home-assistant/frontend` (`Chrome >= 67, Edge >= 79, Firefox >= 98, iOS >= 15.4, Safari >= 15.4`, with a comment explaining they pinned iOS 15.4 *because that is where native `<dialog>` landed*).
+- Of **30** public repos probed (32 attempted; `appsmithorg/appsmith` and `wordpress/wp-calypso` have no root `package.json`), via `raw.githubusercontent.com/<repo>/HEAD/{package.json,.browserslistrc}`: **6 declare a browserslist config**, 28 ship a lockfile, 16 have at least one mapped dependency.
+  - Legacy floors: `jellyfin/jellyfin-web` (`Chrome 27 … Edge 18, iOS > 10, Firefox ESR` → chrome 27 / edge 18 / lowest ios_saf 10.0-10.2) and `home-assistant/frontend` (`Chrome >= 67, Edge >= 79, Firefox >= 98, iOS >= 15.4, Safari >= 15.4`, with a comment explaining they pinned iOS 15.4 *because that is where native `<dialog>` landed*).
   - Permissive floors that flip nothing: `outline/outline` (`> 0.25%, not dead` → chrome 109 / ios_saf 16.6), `grafana/grafana` (production: last 2 versions per engine).
   - Traps: `chatwoot/chatwoot` pins `.browserslistrc` to `defaults`, which resolves wide enough (op_mini, old Chrome) to fail nearly every gate; `kongyijilafumi/react-ant-admin` pins `ie > 9`.
 
