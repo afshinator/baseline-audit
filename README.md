@@ -78,7 +78,7 @@ The gate changes a verdict only when a project declares a browser floor **older*
 
 The 11: `axios`, `a11y-dialog`, `focus-trap`, `focus-trap-react`, `body-scroll-lock`, `react-modal`, `@radix-ui/react-dialog`, `lodash.clonedeep`, `clone-deep`, `lodash.groupby`, `smoothscroll-polyfill`.
 
-So the honest claim is narrow: **this tool prevents wrong swaps for projects with a declared legacy floor.** For a project with no config, or one at Baseline-Widely, the gate cannot change anything — and the report should be read as "safe for Baseline-Widely targets", nothing more. Empirically that is most projects: of 22 public repos probed on 2026-10-28, one (`jellyfin/jellyfin-web`) had a legacy config and the rest had no config at all.
+So the honest claim is narrow: **this tool prevents wrong swaps for projects with a declared legacy floor.** For a project with no config, or one at Baseline-Widely, the gate cannot change anything — and the report should be read as "safe for Baseline-Widely targets", nothing more. Empirically that is most projects: of 32 public repos probed on 2026-10-28, 6 declared a browserslist config at all (2 in `package.json`, 4 in `.browserslistrc`), and only `jellyfin/jellyfin-web` declared a genuinely legacy floor. The rest either declared nothing or declared something permissive.
 
 See [references/targets.md](references/targets.md) for how to establish a real target set, why adding a browserslist config is a build change (Next silently changes CSS and JS transform targets), and the `ios_saf` blind spot that has already produced one false pass.
 
