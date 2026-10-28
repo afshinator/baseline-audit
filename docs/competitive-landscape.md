@@ -49,7 +49,7 @@ Nobody else joins dependency mapping to a resolved browser target set either. Th
 ### 1. youmightnotneed — the only real overlap
 
 - Four surfaces over one pure `detect()`: `npx youmightnotneed`, `npx youmightnotneed-mcp` (tools `analyze_dependencies`, `get_rule`, `list_rules`), an agent skill (`npx skills add jomaendle/youmightnotneed`), and the site. [`packages/catalog/src/detect.ts`](https://github.com/jomaendle/youmightnotneed/blob/main/packages/catalog/src/detect.ts) starts with: *"detect() is pure: no filesystem, no network, no `process`, no clock."*
-- **Mapping is real and broad:** `curl -s https://youmightnotneed.dev/llms.txt | grep -c '^- \['` → **85 rules**, covering axios→`fetch` ([`rules/fetch.ts`](https://github.com/jomaendle/youmightnotneed/blob/main/packages/catalog/src/rules/fetch.ts) lists `axios`, `redaxios`, …), moment→`Intl.DateTimeFormat`, focus-trap→`inert`, framer-motion→`@starting-style`, `swiper`→CSS scroll-snap.
+- **Mapping is real and broad:** `curl -s https://youmightnotneed.dev/llms.txt | grep -oE 'https://youmightnotneed\.dev/rules/[a-z0-9-]+' | sort -u | wc -l` → **81 published rule pages**, covering axios→`fetch` ([`rules/fetch.ts`](https://github.com/jomaendle/youmightnotneed/blob/main/packages/catalog/src/rules/fetch.ts) lists `axios`, `redaxios`, …), moment→`Intl.DateTimeFormat`, focus-trap→`inert`, framer-motion→`@starting-style`, `swiper`→CSS scroll-snap.
 - **It already knows the axios gotcha, in the right place.** `fetch.ts` says: *"Interceptors and upload progress are what is genuinely missing, and they are the reasons to keep the library"* — and the `unless` conditions list upload progress and XSRF/transform/adapter features. That is the same conclusion our usage grep reaches mechanically; theirs is authored text, so it holds for every repo rather than the one being audited.
 - **Baseline is derived, not hardcoded:** each rule stores `web-features` IDs; `baseline.ts` ranks `widely/newly/limited` and reports the *least*-supported required feature. That is better engineering than a hand-maintained status column.
 - **Size is a committed snapshot**, not Bundlephobia: `packageSizes` from `generated/sizes.ts`, with `measuredVersion` tracked separately from the installed version. Labels the total "up to", correctly.
@@ -101,7 +101,7 @@ Bundlephobia is an API (`GET https://bundlephobia.com/api/size?package=axios@1.7
 - 205 `replacements`, 153 carrying `webFeatureId: { featureId, compatKey }`.
 - Each entry also carries `engines: [{ engine, minVersion }]` — the same per-browser floor our gate compares against.
 - `manifests/preferred.json` (175 entries) and `manifests/micro-utilities.json` (105) cover non-platform and micro-utility swaps.
-- `youmightnotneed` rule files counted with `grep -o 'id: "[a-z0-9-]*"' packages/catalog/src/rules/*.ts | wc -l` → **80**, not 85.
+- `youmightnotneed` rule count: 81 published rule pages (live `llms.txt`, 2026-10-28) and 80 rule ids in source (`grep -o 'id: "[a-z0-9-]*"' packages/catalog/src/rules/*.ts | wc -l`). The earlier `grep -c '^- \['` figure of 85 was a bad proxy — it counted link lines in `llms.txt`, not rules.
 
 Consequence for this repo: the mapping table is commodity data available weekly, including support floors. Only the join (§G1–§G5) is defensible.
 
