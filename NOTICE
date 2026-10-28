@@ -1,0 +1,12 @@
+baseline-audit
+Copyright 2026 Afshin Mokhtari
+
+This product includes data derived from web-features
+(https://github.com/web-platform-dx/web-features), licensed under the
+Apache License, Version 2.0.
+
+This product includes data derived from @mdn/browser-compat-data
+(https://github.com/mdn/browser-compat-data), released under CC0-1.0.
+
+Package size figures are retrieved at runtime from the Bundlephobia API
+(https://bundlephobia.com). No Bundlephobia data is redistributed here.

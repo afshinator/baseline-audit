@@ -1,0 +1,572 @@
+{
+  "schema": 1,
+  "note": "Verified 2026-10-28 against web-features@3.44.0. Re-verify any row before trusting it; platform support moves. feature_ids resolve in data/web-features.json. Empty feature_ids = no Baseline-represented replacement, listed to record the gap.",
+  "entries": [
+    {
+      "package": "timeago.js",
+      "cluster": "intl",
+      "replacement": "Intl.RelativeTimeFormat",
+      "feature_ids": [
+        "intl-relative-time-format"
+      ],
+      "keep_if": [],
+      "note": "Library picked the unit for you; you write the arithmetic."
+    },
+    {
+      "package": "pluralize",
+      "cluster": "intl",
+      "replacement": "Intl.PluralRules",
+      "feature_ids": [
+        "intl-plural-rules"
+      ],
+      "keep_if": [],
+      "note": "Singularisation of arbitrary words is not covered; plural selection is."
+    },
+    {
+      "package": "numeral",
+      "cluster": "intl",
+      "replacement": "Intl.NumberFormat",
+      "feature_ids": [
+        "intl"
+      ],
+      "keep_if": [
+        "\\bnumeral\\.(locale|reset|zeroFormat|defaultFormat)"
+      ],
+      "note": "Intl.NumberFormat has no global locale/format switching API.",
+      "partial": true
+    },
+    {
+      "package": "humanize-duration",
+      "cluster": "intl",
+      "replacement": "Intl.DurationFormat",
+      "feature_ids": [
+        "intl-duration-format"
+      ],
+      "keep_if": [],
+      "note": "Rounding/largest-unit logic is yours to write."
+    },
+    {
+      "package": "axios",
+      "cluster": "http",
+      "replacement": "fetch + AbortSignal.timeout",
+      "feature_ids": [
+        "fetch",
+        "abortsignal-timeout"
+      ],
+      "keep_if": [
+        "interceptors",
+        "onUploadProgress",
+        "\\bupload\\b",
+        "validateStatus",
+        "axios\\.(create|all|spread|CancelToken|isCancel)",
+        "responseType: *['\"](blob|arraybuffer)"
+      ],
+      "note": "HTTP errors resolve, not reject. Interceptors, retries, upload progress have no fetch equivalent."
+    },
+    {
+      "package": "superagent",
+      "cluster": "http",
+      "replacement": "fetch",
+      "feature_ids": [
+        "fetch"
+      ],
+      "keep_if": [
+        "\\.attach\\(",
+        "\\.on\\(['\"]progress",
+        "\\.retry\\(",
+        "\\.timeout\\("
+      ],
+      "note": "Upload progress and retries are real gaps."
+    },
+    {
+      "package": "node-fetch",
+      "cluster": "http",
+      "replacement": "global fetch",
+      "feature_ids": [
+        "fetch"
+      ],
+      "keep_if": [],
+      "note": "Only if the code runs in a browser; keep for Node."
+    },
+    {
+      "package": "cross-fetch",
+      "cluster": "http",
+      "replacement": "global fetch",
+      "feature_ids": [
+        "fetch"
+      ],
+      "keep_if": [],
+      "note": ""
+    },
+    {
+      "package": "whatwg-fetch",
+      "cluster": "http",
+      "replacement": "global fetch",
+      "feature_ids": [
+        "fetch"
+      ],
+      "keep_if": [],
+      "note": "Polyfill for browsers below Baseline; drop only if targets allow."
+    },
+    {
+      "package": "isomorphic-fetch",
+      "cluster": "http",
+      "replacement": "global fetch",
+      "feature_ids": [
+        "fetch"
+      ],
+      "keep_if": [],
+      "note": ""
+    },
+    {
+      "package": "a11y-dialog",
+      "cluster": "ui",
+      "replacement": "<dialog> + showModal()",
+      "feature_ids": [
+        "dialog"
+      ],
+      "keep_if": [],
+      "note": "Focus trap, Escape, inert background and focus return come free."
+    },
+    {
+      "package": "focus-trap",
+      "cluster": "ui",
+      "replacement": "<dialog> modal semantics",
+      "feature_ids": [
+        "dialog"
+      ],
+      "keep_if": [
+        "createFocusTrap",
+        "allowOutsideClick"
+      ],
+      "note": "Focus traps outside dialogs are not covered."
+    },
+    {
+      "package": "focus-trap-react",
+      "cluster": "ui",
+      "replacement": "<dialog> modal semantics",
+      "feature_ids": [
+        "dialog"
+      ],
+      "keep_if": [
+        "createFocusTrap",
+        "allowOutsideClick"
+      ],
+      "note": ""
+    },
+    {
+      "package": "body-scroll-lock",
+      "cluster": "ui",
+      "replacement": "body:has(dialog:modal) { overflow: hidden }",
+      "feature_ids": [
+        "dialog"
+      ],
+      "keep_if": [],
+      "note": "CSS :has + :modal, not JS."
+    },
+    {
+      "package": "tippy.js",
+      "cluster": "ui",
+      "replacement": "Popover API + CSS anchor positioning",
+      "feature_ids": [
+        "popover",
+        "anchor-positioning"
+      ],
+      "keep_if": [
+        "followCursor",
+        "trigger: *['\"]click",
+        "render\\(",
+        "onShow",
+        "onHide"
+      ],
+      "note": "Bundles Popper. Anchor positioning is the weaker half: no position-try parity everywhere."
+    },
+    {
+      "package": "@tippyjs/react",
+      "cluster": "ui",
+      "replacement": "Popover API + CSS anchor positioning",
+      "feature_ids": [
+        "popover",
+        "anchor-positioning"
+      ],
+      "keep_if": [
+        "followCursor",
+        "trigger: *['\"]click",
+        "render\\("
+      ],
+      "note": ""
+    },
+    {
+      "package": "@popperjs/core",
+      "cluster": "ui",
+      "replacement": "CSS anchor positioning",
+      "feature_ids": [
+        "anchor-positioning"
+      ],
+      "keep_if": [
+        "autoUpdate",
+        "flip\\(",
+        "shift\\(",
+        "preventOverflow"
+      ],
+      "note": "JS-driven repositioning (autoUpdate, virtual elements) has no CSS equivalent yet."
+    },
+    {
+      "package": "popper.js",
+      "cluster": "ui",
+      "replacement": "CSS anchor positioning",
+      "feature_ids": [
+        "anchor-positioning"
+      ],
+      "keep_if": [],
+      "note": ""
+    },
+    {
+      "package": "@floating-ui/dom",
+      "cluster": "ui",
+      "replacement": "CSS anchor positioning",
+      "feature_ids": [
+        "anchor-positioning"
+      ],
+      "keep_if": [
+        "autoUpdate",
+        "virtual",
+        "flip\\(",
+        "shift\\("
+      ],
+      "note": "Genuine parity gap for dynamic/virtual positioning."
+    },
+    {
+      "package": "@floating-ui/react",
+      "cluster": "ui",
+      "replacement": "CSS anchor positioning",
+      "feature_ids": [
+        "anchor-positioning"
+      ],
+      "keep_if": [
+        "autoUpdate",
+        "virtual",
+        "flip\\(",
+        "shift\\("
+      ],
+      "note": ""
+    },
+    {
+      "package": "react-modal",
+      "cluster": "ui",
+      "replacement": "<dialog>",
+      "feature_ids": [
+        "dialog"
+      ],
+      "keep_if": [],
+      "note": "React state plumbing still needed; the DOM behaviour is native."
+    },
+    {
+      "package": "react-tooltip",
+      "cluster": "ui",
+      "replacement": "Popover API + anchor positioning",
+      "feature_ids": [
+        "popover",
+        "anchor-positioning"
+      ],
+      "keep_if": [
+        "followCursor",
+        "isOpen"
+      ],
+      "note": ""
+    },
+    {
+      "package": "microtip",
+      "cluster": "ui",
+      "replacement": "Popover API",
+      "feature_ids": [
+        "popover"
+      ],
+      "keep_if": [],
+      "note": ""
+    },
+    {
+      "package": "@radix-ui/react-dialog",
+      "cluster": "ui",
+      "replacement": "<dialog>",
+      "feature_ids": [
+        "dialog"
+      ],
+      "keep_if": [],
+      "note": "Not drop-in: Radix owns animation state and the component anatomy.",
+      "partial": true
+    },
+    {
+      "package": "@radix-ui/react-popover",
+      "cluster": "ui",
+      "replacement": "Popover API + anchor positioning",
+      "feature_ids": [
+        "popover",
+        "anchor-positioning"
+      ],
+      "keep_if": [],
+      "note": "Not drop-in; collision handling still comes from Radix/Floating UI.",
+      "partial": true
+    },
+    {
+      "package": "@radix-ui/react-tooltip",
+      "cluster": "ui",
+      "replacement": "Popover API + anchor positioning",
+      "feature_ids": [
+        "popover",
+        "anchor-positioning"
+      ],
+      "keep_if": [],
+      "note": "Not drop-in.",
+      "partial": true
+    },
+    {
+      "package": "radix-ui",
+      "cluster": "ui",
+      "replacement": "mixed primitives (<dialog>, popover, anchor positioning)",
+      "feature_ids": [
+        "dialog",
+        "popover",
+        "anchor-positioning"
+      ],
+      "keep_if": [],
+      "note": "Umbrella package: per-import decisions, verifier must read the imports.",
+      "partial": true
+    },
+    {
+      "package": "lodash",
+      "cluster": "utils",
+      "replacement": "Object.groupBy, structuredClone, Set methods (partial)",
+      "feature_ids": [
+        "array-group",
+        "structured-clone",
+        "set-methods"
+      ],
+      "keep_if": [
+        "debounce",
+        "throttle",
+        "isEqual",
+        "\\.merge\\(",
+        "\\.get\\(|\\bset\\(",
+        "cloneDeep"
+      ],
+      "note": "Only the covered helpers are replaceable; debounce/throttle/isEqual stay.",
+      "partial": true
+    },
+    {
+      "package": "lodash.clonedeep",
+      "cluster": "utils",
+      "replacement": "structuredClone",
+      "feature_ids": [
+        "structured-clone"
+      ],
+      "keep_if": [],
+      "note": "structuredClone throws on functions and drops class prototypes."
+    },
+    {
+      "package": "clone-deep",
+      "cluster": "utils",
+      "replacement": "structuredClone",
+      "feature_ids": [
+        "structured-clone"
+      ],
+      "keep_if": [],
+      "note": ""
+    },
+    {
+      "package": "lodash.groupby",
+      "cluster": "utils",
+      "replacement": "Object.groupBy / Map.groupBy",
+      "feature_ids": [
+        "array-group"
+      ],
+      "keep_if": [],
+      "note": ""
+    },
+    {
+      "package": "lodash.uniq",
+      "cluster": "utils",
+      "replacement": "new Set(array)",
+      "feature_ids": [
+        "set-methods"
+      ],
+      "keep_if": [],
+      "note": ""
+    },
+    {
+      "package": "lodash.union",
+      "cluster": "utils",
+      "replacement": "Set.prototype.union",
+      "feature_ids": [
+        "set-methods"
+      ],
+      "keep_if": [],
+      "note": ""
+    },
+    {
+      "package": "lodash.intersection",
+      "cluster": "utils",
+      "replacement": "Set.prototype.intersection",
+      "feature_ids": [
+        "set-methods"
+      ],
+      "keep_if": [],
+      "note": ""
+    },
+    {
+      "package": "lodash.difference",
+      "cluster": "utils",
+      "replacement": "Set.prototype.difference",
+      "feature_ids": [
+        "set-methods"
+      ],
+      "keep_if": [],
+      "note": ""
+    },
+    {
+      "package": "lodash.debounce",
+      "cluster": "utils",
+      "replacement": "none",
+      "feature_ids": [],
+      "keep_if": [],
+      "note": "No platform equivalent. Keep."
+    },
+    {
+      "package": "lodash.throttle",
+      "cluster": "utils",
+      "replacement": "none",
+      "feature_ids": [],
+      "keep_if": [],
+      "note": "No platform equivalent. Keep."
+    },
+    {
+      "package": "moment",
+      "cluster": "date",
+      "replacement": "Temporal",
+      "feature_ids": [
+        "temporal"
+      ],
+      "polyfill": "@js-temporal/polyfill",
+      "keep_if": [],
+      "note": "Polyfill must be weighed against the library; usually a net add today."
+    },
+    {
+      "package": "dayjs",
+      "cluster": "date",
+      "replacement": "Temporal",
+      "feature_ids": [
+        "temporal"
+      ],
+      "polyfill": "@js-temporal/polyfill",
+      "keep_if": [],
+      "note": "Polyfill is ~15x the gzipped size of dayjs. Watchlist, not a swap."
+    },
+    {
+      "package": "luxon",
+      "cluster": "date",
+      "replacement": "Temporal",
+      "feature_ids": [
+        "temporal"
+      ],
+      "polyfill": "@js-temporal/polyfill",
+      "keep_if": [],
+      "note": "Same polyfill math problem."
+    },
+    {
+      "package": "date-fns",
+      "cluster": "date",
+      "replacement": "partial: Intl.RelativeTimeFormat for formatDistance/formatRelative",
+      "feature_ids": [
+        "intl-relative-time-format"
+      ],
+      "keep_if": [
+        "differenceIn",
+        "addDays",
+        "subDays",
+        "startOf",
+        "endOf",
+        "parseISO"
+      ],
+      "note": "Broad utility lib; only the relative-format helpers map cleanly.",
+      "partial": true
+    },
+    {
+      "package": "uuid",
+      "cluster": "misc",
+      "replacement": "crypto.randomUUID()",
+      "feature_ids": [],
+      "keep_if": [
+        "v1\\(",
+        "v3\\(",
+        "v5\\("
+      ],
+      "note": "No Baseline feature entry in web-features for crypto.randomUUID; verify support manually before swapping.",
+      "partial": true
+    },
+    {
+      "package": "resize-observer-polyfill",
+      "cluster": "misc",
+      "replacement": "ResizeObserver",
+      "feature_ids": [
+        "resize-observer"
+      ],
+      "keep_if": [],
+      "note": ""
+    },
+    {
+      "package": "intersection-observer",
+      "cluster": "misc",
+      "replacement": "IntersectionObserver",
+      "feature_ids": [
+        "intersection-observer"
+      ],
+      "keep_if": [],
+      "note": ""
+    },
+    {
+      "package": "smoothscroll-polyfill",
+      "cluster": "misc",
+      "replacement": "CSS scroll-behavior",
+      "feature_ids": [
+        "scroll-behavior"
+      ],
+      "keep_if": [],
+      "note": ""
+    },
+    {
+      "package": "query-string",
+      "cluster": "misc",
+      "replacement": "URLSearchParams",
+      "feature_ids": [
+        "url"
+      ],
+      "keep_if": [],
+      "note": "Nested-object serialisation is not covered."
+    },
+    {
+      "package": "qs",
+      "cluster": "misc",
+      "replacement": "URLSearchParams",
+      "feature_ids": [
+        "url"
+      ],
+      "keep_if": [
+        "depth",
+        "allowDots",
+        "arrayFormat"
+      ],
+      "note": "Only flat query strings map cleanly.",
+      "partial": true
+    },
+    {
+      "package": "left-pad",
+      "cluster": "misc",
+      "replacement": "String.prototype.padStart",
+      "feature_ids": [
+        "string-pad"
+      ],
+      "keep_if": [],
+      "note": ""
+    }
+  ]
+}
