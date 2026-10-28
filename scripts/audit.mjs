@@ -151,6 +151,15 @@ function signalHits(files, patterns) {
   }
   return hits;
 }
+// Files that import one of the package's direct importers: the package is used
+// through a wrapper there, so keep-signals can live one hop away.
+function aliasImporters(files, importerFiles) {
+  if (!importerFiles.length) return [];
+  const direct = new Set(importerFiles);
+  const stems = importerFiles.map(f => path.basename(f).replace(SRC_EXT, ''));
+  const res = stems.map(stem => new RegExp(`(?:from|require\\(|import\\()\\s*['\"][^'\"]*\\b${esc(stem)}['\"]`));
+  return files.filter(f => !direct.has(f) && res.some(re => re.test(fs.readFileSync(f, 'utf8'))));
+}
 
 // ---------- feature gate ----------
 function gate(feature, targets) {
@@ -200,6 +209,19 @@ function selfcheck() {
     for (const id of e.feature_ids) ok(`mapping ${e.package} -> feature id ${id} exists`, Boolean(DATA.features[id]));
     for (const p of e.keep_if) { let valid = true; try { new RegExp(p); } catch { valid = false; } ok(`mapping ${e.package} regex ${p} compiles`, valid); }
   }
+  // keep-signals must be found through a re-export, not only at the direct import
+  const fx = fs.mkdtempSync(path.join(os.tmpdir(), 'baseline-audit-sc-'));
+  fs.mkdirSync(path.join(fx, 'src'));
+  fs.writeFileSync(path.join(fx, 'src', 'http.ts'), "import axios from 'axios';\nexport const http = axios;\n");
+  fs.writeFileSync(path.join(fx, 'src', 'setup.ts'), "import { http } from './http';\nhttp.interceptors.request.use((c) => c);\n");
+  const fxFiles = walk(fx);
+  const fxDirect = importers(fxFiles, 'axios');
+  const fxAlias = aliasImporters(fxFiles, fxDirect);
+  const axiosKeep = MAPPINGS.find(e => e.package === 'axios').keep_if;
+  ok('direct importer found', fxDirect.some(f => f.endsWith('http.ts')));
+  ok('re-exporting file found', fxAlias.some(f => f.endsWith('setup.ts')));
+  ok('keep-signal found through the re-export', signalHits(fxAlias, axiosKeep).some(h => h.signal === 'interceptors'));
+  fs.rmSync(fx, { recursive: true, force: true });
   const bad = asserts.filter(a => !a.pass);
   for (const a of asserts.slice(0, 200)) if (!a.pass) console.log(`FAIL  ${a.name}`);
   console.log(`${asserts.length - bad.length}/${asserts.length} checks passed; mappings=${MAPPINGS.length} features=${Object.keys(DATA.features).length}`);
@@ -229,7 +251,11 @@ for (const entry of MAPPINGS) {
   const unknown = gates.length === 0 || gates.every(g => g.ok === null);
 
   const importSites = importers(files, entry.package);
-  const signals = entry.keep_if.length && importSites.length ? signalHits(importSites, entry.keep_if) : [];
+  const aliasSites = entry.keep_if.length ? aliasImporters(files, importSites) : [];
+  const bySignal = new Map();
+  for (const h of signalHits(importSites, entry.keep_if)) bySignal.set(h.signal, { ...h, via: 'direct' });
+  for (const h of signalHits(aliasSites, entry.keep_if)) if (!bySignal.has(h.signal)) bySignal.set(h.signal, { ...h, via: 'alias' });
+  const signals = [...bySignal.values()];
 
   let libGzip = null, polyGzip = null, sizeErr = null;
   if (!flag('--no-size') && version) {
@@ -295,7 +321,7 @@ if (rows.some(r => r.signals.length)) {
   out.push('');
   out.push('## Usage that blocks a clean drop');
   for (const r of rows.filter(x => x.signals.length)) {
-    out.push(`- **${r.entry.package}** — ${r.signals.map(s => `\`${s.match}\` in ${s.file}`).join(', ')}. ${r.entry.note}`);
+    out.push(`- **${r.entry.package}** — ${r.signals.map(s => `\`${s.match}\` in ${s.file}${s.via === 'alias' ? ' (through a re-export)' : ''}`).join(', ')}. ${r.entry.note}`);
   }
 }
 if (watch.length) {
