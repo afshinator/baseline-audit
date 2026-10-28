@@ -105,6 +105,17 @@ Bundlephobia is an API (`GET https://bundlephobia.com/api/size?package=axios@1.7
 
 Consequence for this repo: the mapping table is commodity data available weekly, including support floors. Only the join (§G1–§G5) is defensible.
 
+## What the uncovered join is actually worth (measured)
+
+The join is unclaimed, but unclaimed does not mean valuable in every case. Recomputed 2026-10-28 from `data/web-features.json` + `data/mappings.json`:
+
+- 45 mapped packages carry feature data; 25 pass Baseline-Widely targets.
+- Against a chrome 100 / safari 15 floor, **11 of 45** verdicts flip versus a Baseline-Widely run: `axios`, `a11y-dialog`, `focus-trap`, `focus-trap-react`, `body-scroll-lock`, `react-modal`, `@radix-ui/react-dialog`, `lodash.clonedeep`, `clone-deep`, `lodash.groupby`, `smoothscroll-polyfill`. A chrome 87 / safari 14 floor produces the identical 11.
+- Against Baseline-Widely targets the gate flips **0 of 45** by construction.
+- Of 22 public repos probed (`raw.githubusercontent.com/<repo>/HEAD/package.json`), one declared a legacy `browserslist` config (`jellyfin/jellyfin-web`: `Chrome 27 … Edge 18, iOS > 10, Firefox ESR`, resolving to chrome 27 / edge 18 / ios_saf 10.3). One more (`outline/outline`) declared a permissive one (`> 0.25%, not dead` → chrome 109 / ios_saf 16.6) that flips nothing. The remaining 20 declared nothing.
+
+Positioning consequence: "prevents wrong swaps for projects with a declared legacy floor" is defensible and quantified. "Changes the answer at scale" is not — for undetermined audiences the gate is decoration.
+
 ## Gaps nobody covers
 
 - **G1 — Package inventory × resolved browser targets.** No published tool takes installed packages *and* the project's resolved `browserslist`/lockfile and decides per package. Both halves exist separately (module-replacements / youmightnotneed for mapping; eslint-plugin-compat / doiuse for gating); the join is unclaimed.

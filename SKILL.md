@@ -46,6 +46,7 @@ Default when the repo has no browserslist config: `browserslist "baseline widely
 ## Hard rules
 
 - Never say "safe for your users" when the header says `[ASSUMED]`. Say "safe for Baseline-Widely targets."
+- Never present the audience column as insight when targets are assumed: at Baseline-Widely it is a restatement of the Baseline column. It only earns its keep when the header shows a project config with a floor older than the feature (11 of 45 mapped packages can flip; see README).
 - Never write or modify a browserslist config as part of this work. In Next it silently changes CSS and JS transform targets.
 - Never trust bundlephobia's number as the saving in this repo. It is the published package size, not your tree-shaken slice.
 - Never invent a mapping. Unknown package = no verdict.

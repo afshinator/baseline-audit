@@ -64,9 +64,23 @@ Plus a usage section naming the file and call that blocks each drop, a watchlist
 2. **What does the swap cost?** If the polyfill outweighs the library, the bundle gets bigger. This is why `dayjs → Temporal` shows a −41.1K net today.
 3. **Does the platform cover how I actually use it?** `fetch` has no interceptors, retries, or upload progress. `structuredClone` throws on functions. A grep for the specific API surface decides this row.
 
-## Targets are the input that matters
+## Targets are the input that matters — and often a no-op
 
-With no browserslist config, the audit assumes Baseline-Widely targets and marks the report `[ASSUMED]`. That is not the same as "safe for your users". See [references/targets.md](references/targets.md) for how to establish a real target set, why adding a browserslist config is a build change (Next silently changes CSS and JS transform targets), and the `ios_saf` blind spot that has already produced one false pass.
+With no browserslist config the audit assumes Baseline-Widely targets and marks the report `[ASSUMED]`. That is not the same as "safe for your users", and it also means the audience column adds nothing beyond the Baseline column.
+
+The gate changes a verdict only when a project declares a browser floor **older** than the feature's own support version. Measured against the 45 mapped packages that have feature data:
+
+| Project floor | Rows whose verdict differs from a Baseline-Widely run |
+|---|---|
+| Baseline-Widely (chrome 124 / ios 17.4) | 0 of 45 — the gate is a no-op by construction |
+| chrome 100 / safari 15 (2023-era) | 11 of 45 |
+| chrome 87 / safari 14 (2021-era) | 11 of 45 (the same rows) |
+
+The 11: `axios`, `a11y-dialog`, `focus-trap`, `focus-trap-react`, `body-scroll-lock`, `react-modal`, `@radix-ui/react-dialog`, `lodash.clonedeep`, `clone-deep`, `lodash.groupby`, `smoothscroll-polyfill`.
+
+So the honest claim is narrow: **this tool prevents wrong swaps for projects with a declared legacy floor.** For a project with no config, or one at Baseline-Widely, the gate cannot change anything — and the report should be read as "safe for Baseline-Widely targets", nothing more. Empirically that is most projects: of 22 public repos probed on 2026-10-28, one (`jellyfin/jellyfin-web`) had a legacy config and the rest had no config at all.
+
+See [references/targets.md](references/targets.md) for how to establish a real target set, why adding a browserslist config is a build change (Next silently changes CSS and JS transform targets), and the `ios_saf` blind spot that has already produced one false pass.
 
 ## Data freshness
 
