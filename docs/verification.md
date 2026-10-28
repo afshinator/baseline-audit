@@ -3,7 +3,7 @@
 Generated 2026-10-28 by `node scripts/verify-claims.mjs`.
 Every row below recomputes or re-fetches the value; no number is remembered. Re-run to re-check.
 
-**24 passed, 0 failed, 0 skipped.**
+**27 passed, 0 failed, 0 skipped.**
 
 | ID | Claim | Result | Evidence |
 |---|---|---|---|
@@ -26,9 +26,12 @@ Every row below recomputes or re-fetches the value; no number is remembered. Re-
 | E4 | Repo probe sample: 32 repos, 6 with browserslist configs | **PASS** | 32 attempted, 30 with a root package.json, 6 configs, 28 lockfiles, 16 with a mapped dep |
 | E5 | Named candidate repos declare the targets the docs claim | **PASS** | jellyfin → chrome 27 / edge 18 / lowest ios_saf 10.0-10.2; outline → chrome 109 / ios_saf 16.6; chatwoot rc = defaults |
 | E6 | Import sites exist where the shortlist claims they do | **PASS** | jellyfin axios 10 source hits; outline pluralize 7; grafana moment 10 |
-| E7 | Published repo HEAD matches local HEAD | **PASS** | HEAD 2c49d6d on origin/main |
+| E7 | Published repo HEAD matches local HEAD | **PASS** | HEAD 24937e9 on origin/main |
 | C1 | Docs quote the same numbers the checks compute | **PASS** | README and docs/competitive-landscape.md agree with the computed values |
 | C2 | SKILL.md frontmatter is valid for agent-skill discovery | **PASS** | name=baseline-audit, description 548/1024 chars |
+| C5 | Docs quote the real self-check count | **PASS** | selfcheck 124/124; README and SKILL.md both say 124 |
+| E8 | Baseline-Widely minimum versions quoted in references/targets.md | **PASS** | browserslist "baseline widely available" → chrome 124, edge 124, firefox 125, safari 17.4, ios_saf 17.4 |
+| E9 | Next.js browserslist behaviour claimed in references/targets.md | **PASS** | next@16.1.6: loadConfig({path, env}) inside try/catch, defaults chrome 111 / edge 111 / firefox 111 / safari 16.4 |
 | C4 | youmightnotneed rule counts quoted in the landscape doc | **PASS** | 81 published rule pages, 82 rule ids in source, both quoted correctly |
 | C3 | License and attribution files are present and correct | **PASS** | Apache-2.0 text present; NOTICE credits web-features + browser-compat-data |
 

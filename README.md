@@ -12,7 +12,7 @@ Read-only by design: it never edits your project and never writes a browserslist
 # install: clone into an agent skills directory
 git clone https://github.com/afshinator/baseline-audit.git ~/.agents/skills/baseline-audit
 
-# verify it works (121 invariants, no network)
+# verify it works (124 invariants, no network)
 node ~/.agents/skills/baseline-audit/scripts/audit.mjs --selfcheck
 
 # or run it directly, without an agent

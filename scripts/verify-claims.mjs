@@ -363,6 +363,51 @@ await claim('C2', 'SKILL.md frontmatter is valid for agent-skill discovery', asy
   return `name=${kv.name}, description ${kv.description.length}/1024 chars`;
 });
 
+await claim('C5', 'Docs quote the real self-check count', async () => {
+  const r = run(['--selfcheck']);
+  const m = r.out.match(/(\d+)\/(\d+) checks passed/);
+  if (!m) throw new Error('selfcheck output unreadable');
+  const n = Number(m[2]);
+  const quoted = [...readme.matchAll(/(\d+) invariants/g), ...skill.matchAll(/(\d+) invariants/g)].map(x => Number(x[1]));
+  if (!quoted.length) throw new Error('no invariant count quoted in docs');
+  const stale = quoted.filter(q => q !== n);
+  if (stale.length) throw new Error(`docs say ${[...new Set(stale)].join('/')} invariants, selfcheck runs ${n}`);
+  return `selfcheck ${n}/${m[1]}; README and SKILL.md both say ${n}`;
+});
+
+await claim('E8', 'Baseline-Widely minimum versions quoted in references/targets.md', async () => {
+  if (OFFLINE) return 'SKIP';
+  const list = sh('npx', ['--yes', 'browserslist', 'baseline widely available']).trim().split('\n');
+  const min = {};
+  for (const l of list) {
+    const [b, v] = l.split(' ');
+    const n = parseFloat(v.split('-')[0]);
+    if (!(b in min) || n < parseFloat(min[b])) min[b] = v;
+  }
+  const want = { chrome: '124', edge: '124', firefox: '125', safari: '17.4', ios_saf: '17.4' };
+  const doc = fs.readFileSync(path.join(ROOT, 'references', 'targets.md'), 'utf8');
+  for (const [engine, v] of Object.entries(want)) {
+    const got = min[engine];
+    if (!got || parseFloat(got) < parseFloat(v)) throw new Error(`${engine}: resolved ${got}, doc says ${v}`);
+  }
+  if (!doc.includes('chrome 124, edge 124, firefox 125, safari 17.4, ios_saf 17.4')) throw new Error('targets.md does not quote the current minimums');
+  return `browserslist "baseline widely available" → chrome ${min.chrome}, edge ${min.edge}, firefox ${min.firefox}, safari ${min.safari}, ios_saf ${min.ios_saf}`;
+});
+
+await claim('E9', 'Next.js browserslist behaviour claimed in references/targets.md', async () => {
+  if (OFFLINE) return 'SKIP';
+  const utils = sh('curl', ['-sfL', '--max-time', '40', 'https://unpkg.com/next@16.1.6/dist/build/utils.js']);
+  const constants = sh('curl', ['-sfL', '--max-time', '40', 'https://unpkg.com/next@16.1.6/dist/shared/lib/modern-browserslist-target.js']);
+  const checks = [
+    ['loadConfig is called with path+env', /browserslist[\s\S]{0,200}loadConfig\(\{[^}]*path:[^}]*env:/.test(utils)],
+    ['config load is wrapped in a silent catch', /try\s*\{[\s\S]{0,3000}loadConfig[\s\S]{0,3000}\} catch/.test(utils)],
+    ['default target is chrome 111/edge 111/firefox 111/safari 16.4', ['chrome 111', 'edge 111', 'firefox 111', 'safari 16.4'].every(v => constants.includes(v))],
+  ];
+  const bad = checks.filter(([, v]) => !v).map(([k]) => k);
+  if (bad.length) throw new Error(bad.join('; '));
+  return 'next@16.1.6: loadConfig({path, env}) inside try/catch, defaults chrome 111 / edge 111 / firefox 111 / safari 16.4';
+});
+
 await claim('C4', 'youmightnotneed rule counts quoted in the landscape doc', async () => {
   if (OFFLINE) return 'SKIP';
   const txt = sh('curl', ['-sf', '--max-time', '25', 'https://youmightnotneed.dev/llms.txt']);

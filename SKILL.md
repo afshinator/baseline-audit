@@ -18,7 +18,7 @@ node scripts/audit.mjs <repo-dir> --targets "chrome 124, safari 17.4, ios_saf 17
 node scripts/audit.mjs <repo-dir> --query "last 2 years, not dead"
 node scripts/audit.mjs <repo-dir> --no-size              # offline, skips gzip measurement
 node scripts/audit.mjs <repo-dir> --json                 # machine-readable
-node scripts/audit.mjs --selfcheck                       # 121 invariants, no network
+node scripts/audit.mjs --selfcheck                       # 124 invariants, no network
 ```
 
 Default when the repo has no browserslist config: `browserslist "baseline widely available"`, labelled `[ASSUMED]` in the header. Read `references/targets.md` before interpreting that label.
