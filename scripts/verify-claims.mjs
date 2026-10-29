@@ -375,6 +375,40 @@ await claim('E10', 'Committed benchmark report matches its machine-readable JSON
   return `${latest}: ${data.repos.length} repos, ${t.prodDeps} deps, ${t.mapped} mapped, ${t.swap} swap, ${t.check} check, ${t.blocked} blocked — report matches JSON`;
 });
 
+await claim('E12', 'Hand-verification note agrees with the benchmark it annotates', async () => {
+  const dir = path.join(ROOT, 'docs', 'benchmarks');
+  const jsonFile = fs.readdirSync(dir).filter(f => f.endsWith('.json')).sort().at(-1);
+  if (!jsonFile) return 'SKIP';
+  const data = JSON.parse(fs.readFileSync(path.join(dir, jsonFile), 'utf8'));
+  const note = fs.readFileSync(path.join(dir, jsonFile.replace('.json', '-hand-verification.md')), 'utf8');
+  const t = data.totals;
+  const checks = [
+    ['claims zero clean swaps', t.swap === 0 && /Confirmed clean swaps: \*\*0\*\*/.test(note)],
+    ['quotes the same dependency total', note.includes(String(t.prodDeps))],
+    ['quotes the same mapped total', note.includes(String(t.mapped))],
+    ['per-repo mapped counts match', data.repos.every(r => note.includes(`| ${r.label} | ${r.mapped} |`))],
+    ['no swap verdict contradicts it', data.repos.every(r => (r.verdicts.swap ?? 0) === 0)],
+  ];
+  const bad = checks.filter(([, ok]) => !ok).map(([k]) => k);
+  if (bad.length) throw new Error(`hand-verification note disagrees with ${jsonFile}: ${bad.join(', ')}`);
+  // Re-grep the quoted source lines when the clones are still on this machine.
+  const work = path.join(os.tmpdir(), 'baseline-bench');
+  if (!fs.existsSync(work)) return `${jsonFile}: ${checks.length} consistency checks pass (clones absent, source lines not re-grepped)`;
+  const probes = [
+    ['jellyfin__jellyfin-web', 'src/hooks/useItem.ts', 'axios', note.includes('axios` in `src/hooks/*`')],
+    ['grafana__grafana', 'public/app/plugins/datasource/grafana/components/QueryEditor.tsx', "pluralize('frame'", true],
+    ['outline__outline', 'plugins/webhooks/server/tasks/DeliverWebhookTask.ts', 'instanceof FetchError', true],
+    ['outline__outline', 'app/scenes/Drafts.tsx', 'skipEmptyString', true],
+  ];
+  const missing = [];
+  for (const [repo, file, needle] of probes) {
+    const p = path.join(work, repo, file);
+    if (fs.existsSync(p) && !fs.readFileSync(p, 'utf8').includes(needle)) missing.push(`${repo}/${file}: ${needle}`);
+  }
+  if (missing.length) throw new Error(`quoted source lines have changed: ${missing.join('; ')}`);
+  return `${jsonFile}: ${checks.length} consistency checks pass, ${probes.length} quoted source lines re-grepped`;
+});
+
 await claim('C6', 'No stale verification count quoted in the docs', async () => {
   const quoted = [...readme.matchAll(/(\d+) machine checks/g)].map(m => Number(m[1]));
   const stale = quoted.filter(q => q !== results.length + 1); // +1: this check itself

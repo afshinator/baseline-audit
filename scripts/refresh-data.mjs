@@ -11,6 +11,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(HERE, '..', 'data', 'web-features.json');
 const SRC_URL = 'https://unpkg.com/web-features/data.json';
 
+const DRY = process.argv.includes('--dry-run');
 const fromIdx = process.argv.indexOf('--from');
 const localPath = fromIdx > -1 ? process.argv[fromIdx + 1] : null;
 
@@ -55,9 +56,13 @@ const out = {
   refreshed_at: new Date().toISOString().slice(0, 10),
   features,
 };
-fs.writeFileSync(OUT, JSON.stringify(out));
-const kb = (fs.statSync(OUT).size / 1024).toFixed(0);
-console.log(`wrote ${Object.keys(features).length} features (${kb}KB) -> ${OUT}`);
+if (DRY) {
+  console.log(`dry-run: parsed ${Object.keys(features).length} features from ${upstreamVersion}, nothing written`);
+} else {
+  fs.writeFileSync(OUT, JSON.stringify(out));
+  const kb = (fs.statSync(OUT).size / 1024).toFixed(0);
+  console.log(`wrote ${Object.keys(features).length} features (${kb}KB) -> ${OUT}`);
+}
 
 // self-check: the article's headline swaps must resolve, and statuses must be sane
 const need = ['intl-relative-time-format', 'intl-plural-rules', 'intl-duration-format', 'dialog', 'popover', 'structured-clone', 'array-group', 'set-methods', 'temporal', 'fetch'];

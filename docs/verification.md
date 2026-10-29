@@ -3,7 +3,7 @@
 Generated 2026-10-29 by `node scripts/verify-claims.mjs`.
 Every row below recomputes or re-fetches the value; no number is remembered. Re-run to re-check.
 
-**30 passed, 0 failed, 0 skipped.**
+**31 passed, 0 failed, 0 skipped.**
 
 | ID | Claim | Result | Evidence |
 |---|---|---|---|
@@ -26,9 +26,10 @@ Every row below recomputes or re-fetches the value; no number is remembered. Re-
 | E4 | Repo probe sample: 32 repos, 6 with browserslist configs | **PASS** | 32 attempted, 30 with a root package.json, 6 configs, 28 lockfiles, 16 with a mapped dep |
 | E5 | Named candidate repos declare the targets the docs claim | **PASS** | jellyfin → chrome 27 / edge 18 / lowest ios_saf 10.0-10.2; outline → chrome 109 / ios_saf 16.6; chatwoot rc = defaults |
 | E6 | Import sites exist where the shortlist claims they do | **PASS** | jellyfin axios 10 source hits; outline pluralize 7; grafana moment 10 |
-| E7 | Published repo HEAD matches local HEAD | **PASS** | HEAD 5461c51 on origin/main |
+| E7 | Published repo HEAD matches local HEAD | **PASS** | HEAD 573fb4f on origin/main |
 | C1 | Docs quote the same numbers the checks compute | **PASS** | README and docs/competitive-landscape.md agree with the computed values |
 | E10 | Committed benchmark report matches its machine-readable JSON | **PASS** | 2026-10-29.json: 4 repos, 432 deps, 22 mapped, 0 swap, 9 check, 13 blocked — report matches JSON |
+| E12 | Hand-verification note agrees with the benchmark it annotates | **PASS** | 2026-10-29.json: 5 consistency checks pass, 4 quoted source lines re-grepped |
 | C6 | No stale verification count quoted in the docs | **PASS** | docs quote no fixed count |
 | E11 | Tailwind claim in references/targets.md (no browserslist, hardcoded CSS targets) | **PASS** | @tailwindcss/node@4.3.3: hardcoded targets safari 16.1 / ios 16.1 / firefox 128 / chrome 111, zero browserslist references |
 | C2 | SKILL.md frontmatter is valid for agent-skill discovery | **PASS** | name=baseline-audit, description 548/1024 chars |

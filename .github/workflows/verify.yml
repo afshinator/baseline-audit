@@ -27,6 +27,14 @@ jobs:
         run: node scripts/audit.mjs --selfcheck
       - name: Claim checks (offline)
         run: node scripts/verify-claims.mjs --offline --no-write
+      # The three network-facing scripts are only otherwise exercised by hand.
+      # One matrix leg, so a flaky registry does not fail six jobs.
+      - name: Downstream scripts still work
+        if: matrix.node == 22
+        run: |
+          node scripts/refresh-data.mjs --dry-run
+          node scripts/sync-mappings.mjs --dry-run
+          node scripts/benchmark.mjs --smoke
       - name: Fixture smoke test
         run: |
           mkdir -p /tmp/fixture/src

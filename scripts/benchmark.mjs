@@ -16,6 +16,10 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
 const WORK = path.join(os.tmpdir(), 'baseline-bench');
 const REUSE = process.argv.includes('--reuse');
+// --smoke: exercise the whole pipeline against local fixtures, no git, no network,
+// no writes into docs/. This is what CI runs, because cloning four real repos per
+// push is not a test, it is a download.
+const SMOKE = process.argv.includes('--smoke');
 const DEFAULT_SET = [
   'jellyfin/jellyfin-web',   // declared legacy floor
   'grafana/grafana',         // declared modern floor, heavy mapping density
@@ -23,7 +27,8 @@ const DEFAULT_SET = [
   'nocodb/nocodb',           // control: expected no mapped dependency
 ];
 const repos = process.argv.slice(2).filter(a => !a.startsWith('--'));
-const set = repos.length ? repos : DEFAULT_SET;
+const set = SMOKE ? ['smoke/fixture-a', 'smoke/fixture-b'] : (repos.length ? repos : DEFAULT_SET);
+const SMOKE_TARGETS = 'chrome 100, edge 100, firefox 102, safari 15';
 const BW = 'chrome 124, edge 124, firefox 125, safari 17.4, ios_saf 17.4';
 
 fs.mkdirSync(WORK, { recursive: true });
@@ -36,14 +41,22 @@ const audit = (dir, extra = []) => {
 const rows = [];
 for (const [i, repo] of set.entries()) {
   const label = `R${i + 1}`;
-  const dir = path.join(WORK, repo.replace('/', '__'));
-  if (!REUSE || !fs.existsSync(path.join(dir, 'package.json'))) {
+  const dir = path.join(WORK, SMOKE ? `smoke-${label}` : repo.replace('/', '__'));
+  if (SMOKE) {
+    // fixture-a: two mapped deps, both blocked at this floor. fixture-b: no deps at all.
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.mkdirSync(path.join(dir, 'src'), { recursive: true });
+    const deps = label === 'R1' ? { axios: '1.7.7', 'lodash.clonedeep': '4.5.0' } : {};
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: `smoke-${label}`, dependencies: deps }));
+    fs.writeFileSync(path.join(dir, 'src', 'a.js'), "import axios from 'axios';\nimport clone from 'lodash.clonedeep';\nexport const x = [axios, clone];\n");
+  } else if (!REUSE || !fs.existsSync(path.join(dir, 'package.json'))) {
     fs.rmSync(dir, { recursive: true, force: true });
     execFileSync('git', ['clone', '-q', '--depth', '1', `https://github.com/${repo}.git`, dir], { stdio: 'ignore' });
   }
   const declared = (() => { try { return Object.keys(JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8')).dependencies ?? {}).length; } catch { return 0; } })();
-  const base = declared === 0 ? { rows: [], recoverable: 0, targets: { source: 'n/a', assumed: false } } : audit(dir);
-  const bw = declared === 0 ? { rows: [] } : audit(dir, ['--no-size', '--targets', BW]);
+  const baseArgs = SMOKE ? ['--no-size', '--targets', SMOKE_TARGETS] : [];
+  const base = declared === 0 ? { rows: [], recoverable: 0, targets: { source: 'n/a', assumed: false } } : audit(dir, baseArgs);
+  const bw = declared === 0 ? { rows: [] } : audit(dir, [...(SMOKE ? ['--no-size'] : ['--no-size']), '--targets', BW]);
   const verdicts = base.rows.reduce((a, r) => ((a[r.verdict] = (a[r.verdict] ?? 0) + 1), a), {});
   const flips = base.rows
     .map(r => ({ pkg: r.entry.package, a: r.verdict, b: (bw.rows.find(x => x.entry.package === r.entry.package) ?? {}).verdict }))
@@ -108,12 +121,27 @@ const out = [
   '- Published package size is not tree-shaken size. Treat the KB figure as an upper bound.',
   '- Four repos is a sample, not a survey. One of them exists to prove the tool can return nothing.',
 ];
-fs.mkdirSync(path.join(ROOT, 'docs', 'benchmarks'), { recursive: true });
-fs.mkdirSync(path.join(ROOT, 'docs', 'benchmarks'), { recursive: true });
-fs.writeFileSync(path.join(ROOT, 'docs', 'benchmarks', `${date}.json`), JSON.stringify({
+const OUTDIR = SMOKE ? path.join(WORK, 'smoke-out') : path.join(ROOT, 'docs', 'benchmarks');
+fs.mkdirSync(OUTDIR, { recursive: true });
+fs.writeFileSync(path.join(OUTDIR, `${date}.json`), JSON.stringify({
   date, rule: 'aggregate only: repo names are not committed',
   repos: rows.map(r => ({ label: r.label, prodDeps: r.prodDeps, mapped: r.mapped, declared: !r.assumed && r.mapped > 0, verdicts: r.verdicts, flips: r.flips.length })),
   totals,
 }, null, 2));
-fs.writeFileSync(path.join(ROOT, 'docs', 'benchmarks', `${date}.md`), out.join('\n'));
+fs.writeFileSync(path.join(OUTDIR, `${date}.md`), out.join('\n'));
 console.log(out.join('\n'));
+if (SMOKE) {
+  const md = fs.readFileSync(path.join(OUTDIR, `${date}.md`), 'utf8');
+  const json = JSON.parse(fs.readFileSync(path.join(OUTDIR, `${date}.json`), 'utf8'));
+  const checks = [
+    ['two repos in the report', (md.match(/^\| R\d+ \|/gm) ?? []).length === 2],
+    ['fixture mapped 2 deps', json.repos[0].mapped === 2],
+    ['both blocked at this floor', json.repos[0].verdicts.blocked === 2 && (json.repos[0].verdicts.swap ?? 0) === 0],
+    ['null repo recorded', json.repos[1].mapped === 0 && json.totals.nullRepos === 1],
+    ['report quotes the JSON totals', md.includes(`${json.totals.mapped} matched a row`) && md.includes(`${json.totals.blocked} \`blocked\``)],
+    ['no repo names in the report', !/\bjellyfin\b|\bgrafana\b|\bnocodb\b|outline\/outline/.test(md)],
+  ];
+  const bad = checks.filter(([, ok]) => !ok).map(([k]) => k);
+  if (bad.length) { console.error(`smoke FAILED: ${bad.join(', ')}`); process.exit(1); }
+  console.log(`\nsmoke ok: ${checks.length} assertions, wrote ${path.join(OUTDIR, date + '.md')}`);
+}
