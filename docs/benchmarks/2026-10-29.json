@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-29",
+  "rule": "aggregate only: repo names are not committed",
+  "repos": [
+    {
+      "label": "R1",
+      "prodDeps": 60,
+      "mapped": 6,
+      "declared": true,
+      "verdicts": {
+        "blocked": 6
+      },
+      "flips": 6
+    },
+    {
+      "label": "R2",
+      "prodDeps": 157,
+      "mapped": 7,
+      "declared": true,
+      "verdicts": {
+        "check": 3,
+        "blocked": 4
+      },
+      "flips": 1
+    },
+    {
+      "label": "R3",
+      "prodDeps": 215,
+      "mapped": 9,
+      "declared": true,
+      "verdicts": {
+        "check": 6,
+        "blocked": 3
+      },
+      "flips": 0
+    },
+    {
+      "label": "R4",
+      "prodDeps": 0,
+      "mapped": 0,
+      "declared": false,
+      "verdicts": {},
+      "flips": 0
+    }
+  ],
+  "totals": {
+    "prodDeps": 432,
+    "mapped": 22,
+    "swap": 0,
+    "check": 9,
+    "blocked": 13,
+    "keep": 0,
+    "recoverable": 0,
+    "flips": 7,
+    "withConfig": 3,
+    "nullRepos": 1,
+    "noConfig": 0
+  }
+}

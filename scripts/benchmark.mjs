@@ -111,5 +111,11 @@ const out = [
   '- Four repos is a sample, not a survey. One of them exists to prove the tool can return nothing.',
 ];
 fs.mkdirSync(path.join(ROOT, 'docs', 'benchmarks'), { recursive: true });
+fs.mkdirSync(path.join(ROOT, 'docs', 'benchmarks'), { recursive: true });
+fs.writeFileSync(path.join(ROOT, 'docs', 'benchmarks', `${date}.json`), JSON.stringify({
+  date, rule: 'aggregate only: repo names are not committed',
+  repos: rows.map(r => ({ label: r.label, prodDeps: r.prodDeps, mapped: r.mapped, declared: !r.assumed && r.mapped > 0, verdicts: r.verdicts, flips: r.flips.length })),
+  totals,
+}, null, 2));
 fs.writeFileSync(path.join(ROOT, 'docs', 'benchmarks', `${date}.md`), out.join('\n'));
 console.log(out.join('\n'));

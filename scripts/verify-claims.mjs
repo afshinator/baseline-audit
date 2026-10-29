@@ -351,6 +351,29 @@ await claim('C1', 'Docs quote the same numbers the checks compute', async () => 
   return 'README and docs/competitive-landscape.md agree with the computed values';
 });
 
+await claim('E10', 'Committed benchmark report matches its machine-readable JSON', async () => {
+  const dir = path.join(ROOT, 'docs', 'benchmarks');
+  const files = fs.readdirSync(dir).filter(f => f.endsWith('.json')).sort();
+  if (!files.length) return 'SKIP';
+  const latest = files.at(-1);
+  const data = JSON.parse(fs.readFileSync(path.join(dir, latest), 'utf8'));
+  const md = fs.readFileSync(path.join(dir, latest.replace('.json', '.md')), 'utf8');
+  const t = data.totals;
+  const claims = [
+    [`${t.prodDeps} production dependencies`, 'total production deps'],
+    [`${t.mapped} matched a row`, 'mapped total'],
+    [t.swap === 0 ? 'No package came back `swap`' : `${t.swap} package`, 'swap count'],
+    [`${t.check} \`check\``, 'check count'],
+    [`${t.blocked} \`blocked\``, 'blocked count'],
+    [`${t.flips} verdict`, 'flip count'],
+  ];
+  const bad = claims.filter(([needle]) => !md.includes(needle)).map(([, what]) => what);
+  if (bad.length) throw new Error(`report disagrees with ${latest}: ${bad.join(', ')}`);
+  const tableRows = md.split('\n').filter(l => /^\| R\d+ \|/.test(l)).length;
+  if (tableRows !== data.repos.length) throw new Error(`report has ${tableRows} repo rows, JSON has ${data.repos.length}`);
+  return `${latest}: ${data.repos.length} repos, ${t.prodDeps} deps, ${t.mapped} mapped, ${t.swap} swap, ${t.check} check, ${t.blocked} blocked — report matches JSON`;
+});
+
 await claim('C2', 'SKILL.md frontmatter is valid for agent-skill discovery', async () => {
   const fm = skill.match(/^---\n([\s\S]*?)\n---\n/);
   if (!fm) throw new Error('no frontmatter');
