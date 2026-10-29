@@ -52,12 +52,19 @@ function browserslistHere(query) {
   const bin = path.join(dir, 'node_modules', '.bin', 'browserslist');
   const argv = query ? [query] : [];
   const opts = { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] };
-  try {
-    const out = fs.existsSync(bin)
-      ? execFileSync(bin, argv, opts)
-      : execFileSync('npx', ['--no-install', 'browserslist', ...argv], opts);
-    return out.trim().split('\n').filter(Boolean);
-  } catch { return null; }
+  const attempts = fs.existsSync(bin)
+    ? [[bin, argv]]
+    : [['npx', ['--no-install', 'browserslist', ...argv]]];
+  // A fresh clone rarely has browserslist installed, but the project's config is still the
+  // authority on its targets. Fetch the resolver rather than silently auditing the wrong audience.
+  if (!fs.existsSync(bin) && !flag('--offline')) attempts.push(['npx', ['--yes', 'browserslist@latest', ...argv]]);
+  for (const [cmd, args] of attempts) {
+    try {
+      const out = execFileSync(cmd, args, opts);
+      if (out.trim()) return { list: out.trim().split('\n').filter(Boolean), downloaded: cmd === 'npx' && !fs.existsSync(bin) };
+    } catch {}
+  }
+  return null;
 }
 
 function hasBrowserslistConfig(d) {
@@ -69,8 +76,11 @@ function resolveTargets() {
   const lit = opt('--targets');
   if (lit) return { targets: normalizeTargets(parseTargetsLiteral(lit)), source: '--targets', assumed: true };
   const q = opt('--query') ?? (hasBrowserslistConfig(dir) ? '' : 'baseline widely available');
-  const list = browserslistHere(q);
-  if (list && list.length) return { targets: normalizeTargets(parseTargetsLiteral(list.join(', '))), source: q ? `browserslist "${q}"` : 'project browserslist config', assumed: Boolean(q) };
+  const hit = browserslistHere(q);
+  if (hit?.list?.length) {
+    const via = hit.downloaded ? ' (resolver fetched via npx)' : '';
+    return { targets: normalizeTargets(parseTargetsLiteral(hit.list.join(', '))), source: (q ? `browserslist "${q}"` : 'project browserslist config') + via, assumed: Boolean(q) };
+  }
   if (opt('--query')) throw new Error(`could not resolve --query "${opt('--query')}": install browserslist in the project, or pass --targets "chrome 124, safari 17.4"`);
   const fallback = parseTargetsLiteral('chrome 124, edge 124, firefox 125, safari 17.4, ios_saf 17.4');
   return { targets: fallback, source: hasBrowserslistConfig(dir) ? 'assumed default (project browserslist config unreadable)' : 'assumed default (no project browserslist config)', assumed: true };

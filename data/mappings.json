@@ -2622,13 +2622,19 @@
     {
       "package": "node-fetch",
       "cluster": "http",
-      "replacement": "global fetch",
+      "replacement": "global fetch (Node 18+)",
       "feature_ids": [
         "fetch"
       ],
-      "keep_if": [],
+      "keep_if": [
+        "FetchError",
+        "\\.buffer\\(",
+        "\\bagent\\s*:",
+        "\\btimeout\\s*:",
+        "\\bsize\\s*:"
+      ],
       "usage_analyzed": true,
-      "note": "Only if the code runs in a browser; keep for Node.",
+      "note": "node-fetch exports FetchError and option shapes (agent, timeout, size) that global fetch does not have; global fetch throws TypeError instead.",
       "source": "curated+e18e"
     },
     {
@@ -3033,13 +3039,18 @@
     {
       "package": "pluralize",
       "cluster": "intl",
-      "replacement": "Intl.PluralRules",
+      "replacement": "Intl.PluralRules (count agreement only)",
       "feature_ids": [
         "intl-plural-rules"
       ],
-      "keep_if": [],
+      "keep_if": [
+        "pluralize\\(",
+        "\\.plural\\(",
+        "\\.singular\\("
+      ],
       "usage_analyzed": true,
-      "note": "Singularisation of arbitrary words is not covered; plural selection is.",
+      "partial": true,
+      "note": "Intl.PluralRules selects a plural category; it cannot produce 'frames' from 'frame' or a pluralised endpoint name. Any word-form use blocks the swap.",
       "source": "curated"
     },
     {
@@ -3162,9 +3173,17 @@
       "feature_ids": [
         "url"
       ],
-      "keep_if": [],
+      "keep_if": [
+        "arrayFormat",
+        "sort\\s*:",
+        "skipNull",
+        "skipEmpty",
+        "allowDots",
+        "\\bdepth\\s*:",
+        "strict\\s*:"
+      ],
       "usage_analyzed": true,
-      "note": "Nested-object serialisation is not covered.",
+      "note": "URLSearchParams covers flat string parse/stringify. query-string's arrayFormat, sort, skipNull and nested-object handling have no direct equivalent.",
       "source": "curated"
     },
     {
