@@ -14,6 +14,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
 const AUDIT = path.join(HERE, 'audit.mjs');
 const OFFLINE = process.argv.includes('--offline');
+const NO_WRITE = process.argv.includes('--no-write');
 const DATA = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/web-features.json'), 'utf8'));
 const MAPS = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/mappings.json'), 'utf8')).entries;
 const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
@@ -473,7 +474,7 @@ const lines = [
   '- Judgement, not measurement: which repos are representative, and whether a benchmark sample is cherry-picked.',
   '',
 ];
-fs.writeFileSync(path.join(ROOT, 'docs', 'verification.md'), lines.join('\n'));
+if (!NO_WRITE) fs.writeFileSync(path.join(ROOT, 'docs', 'verification.md'), lines.join('\n'));
 if (tmpRoot) fs.rmSync(tmpRoot, { recursive: true, force: true });
-console.log(`\n${pass} passed, ${fail.length} failed, ${skip} skipped → docs/verification.md`);
+console.log(`\n${pass} passed, ${fail.length} failed, ${skip} skipped${NO_WRITE ? '' : ' → docs/verification.md'}`);
 if (fail.length) { for (const f of fail) console.log(`FAIL ${f.id} ${f.description}: ${f.evidence}`); process.exit(1); }

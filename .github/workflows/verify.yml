@@ -1,0 +1,29 @@
+name: verify
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Dataset + behaviour only. Network checks (E1-E5, E7-E9, C4) are skipped:
+      # GitHub code search, Bundlephobia and unpkg rate-limit, and a flaky red badge
+      # is worse than an honest local run of `node scripts/verify-claims.mjs`.
+      - name: Self-check (no network)
+        run: node scripts/audit.mjs --selfcheck
+      - name: Claim checks (offline)
+        run: node scripts/verify-claims.mjs --offline --no-write
+      - name: Fixture smoke test
+        run: |
+          mkdir -p /tmp/fixture/src
+          printf '{"name":"fixture","dependencies":{"axios":"1.7.7","lodash.clonedeep":"4.5.0"}}' > /tmp/fixture/package.json
+          printf 'import axios from "axios";\nimport clone from "lodash.clonedeep";\nexport const x = [axios, clone];\n' > /tmp/fixture/src/a.js
+          node scripts/audit.mjs /tmp/fixture --no-size --targets "chrome 100, edge 100, firefox 102, safari 15" | tee /tmp/out.md
+          grep -q '\*\*blocked\*\*' /tmp/out.md
