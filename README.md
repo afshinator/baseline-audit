@@ -98,7 +98,7 @@ Feature statuses age from *Limited* to *Newly* to *Widely* (30 months after land
 
 ## Evidence
 
-- [`docs/verification.md`](docs/verification.md) — 27 machine checks, re-runnable with `node scripts/verify-claims.mjs`. Every number in this README is recomputed or re-fetched there.
+- [`docs/verification.md`](docs/verification.md) — every number in this README is recomputed or re-fetched there by `node scripts/verify-claims.mjs` (the count is at the top of that file, and a check fails if this line goes stale).
 - [`docs/benchmarks/`](docs/benchmarks/) — one benchmark run against four real projects (432 production dependencies), hand-verified line by line. It found **zero clean swaps** and was published as a negative result, because the pass/fail rule was fixed before the run. The earlier pre-fix run, which returned four swaps that were all wrong, is recorded in the same hand-verification file.
 - [`docs/competitive-landscape.md`](docs/competitive-landscape.md) — what already exists, what it covers, and what this adds.
 

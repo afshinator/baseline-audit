@@ -45,20 +45,18 @@ for (const [i, repo] of set.entries()) {
   const base = declared === 0 ? { rows: [], recoverable: 0, targets: { source: 'n/a', assumed: false } } : audit(dir);
   const bw = declared === 0 ? { rows: [] } : audit(dir, ['--no-size', '--targets', BW]);
   const verdicts = base.rows.reduce((a, r) => ((a[r.verdict] = (a[r.verdict] ?? 0) + 1), a), {});
-  const bwVerdicts = bw.rows.reduce((a, r) => ((a[r.verdict] = (a[r.verdict] ?? 0) + 1), a), {});
   const flips = base.rows
     .map(r => ({ pkg: r.entry.package, a: r.verdict, b: (bw.rows.find(x => x.entry.package === r.entry.package) ?? {}).verdict }))
     .filter(x => x.b && x.a !== x.b);
   rows.push({
-    label, repo, dir,
-    deps: base.rows.length ? null : 0,
+    label, repo,
     prodDeps: declared,
-    targetsSource: base.targets.source, assumed: base.targets.assumed,
-    mapped: base.rows.length, verdicts, bwVerdicts, flips,
+    assumed: base.targets.assumed,
+    mapped: base.rows.length, verdicts, flips,
     recoverable: base.recoverable,
-    swapPackages: base.rows.filter(r => r.verdict === 'swap').map(r => r.entry.package),
+
   });
-  process.stderr.write(`${label} ${repo}: ${rows.at(-1).prodDeps} prod deps, ${base.rows.length} mapped, ${rows.at(-1).swapPackages.length} swap\n`);
+  process.stderr.write(`${label} ${repo}: ${rows.at(-1).prodDeps} prod deps, ${base.rows.length} mapped, ${base.rows.filter(r => r.verdict === 'swap').length} swap\n`);
 }
 
 fs.writeFileSync(path.join(WORK, 'labels.json'), JSON.stringify(rows.map(r => ({ label: r.label, repo: r.repo })), null, 2));

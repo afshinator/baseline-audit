@@ -375,6 +375,28 @@ await claim('E10', 'Committed benchmark report matches its machine-readable JSON
   return `${latest}: ${data.repos.length} repos, ${t.prodDeps} deps, ${t.mapped} mapped, ${t.swap} swap, ${t.check} check, ${t.blocked} blocked — report matches JSON`;
 });
 
+await claim('C6', 'No stale verification count quoted in the docs', async () => {
+  const quoted = [...readme.matchAll(/(\d+) machine checks/g)].map(m => Number(m[1]));
+  const stale = quoted.filter(q => q !== results.length + 1); // +1: this check itself
+  if (stale.length) throw new Error(`README says ${stale.join('/')} machine checks, report has ${results.length + 1}`);
+  return quoted.length ? `README quotes ${quoted[0]}, which matches` : 'docs quote no fixed count';
+});
+
+await claim('E11', 'Tailwind claim in references/targets.md (no browserslist, hardcoded CSS targets)', async () => {
+  if (OFFLINE) return 'SKIP';
+  const dir = path.join(tmp(), 'tw');
+  fs.mkdirSync(dir, { recursive: true });
+  sh('npm', ['pack', '@tailwindcss/node@4.3.3', '--silent'], { cwd: dir });
+  sh('tar', ['xzf', fs.readdirSync(dir).find(f => f.endsWith('.tgz')), '-C', dir], { cwd: dir });
+  const dist = fs.readFileSync(path.join(dir, 'package', 'dist', 'index.js'), 'utf8');
+  const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package', 'package.json'), 'utf8'));
+  const hardcoded = /targets:\{safari:16<<16\|1024,ios_saf:16<<16\|1024,firefox:8388608,chrome:7274496\}/.test(dist);
+  if (!hardcoded) throw new Error('hardcoded Lightning CSS targets not found');
+  if (/browserslist/.test(dist) || Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).some(d => d === 'browserslist')) throw new Error('package references browserslist');
+  if (!/Tailwind v4 does \*\*not\*\* read browserslist/.test(fs.readFileSync(path.join(ROOT, 'references', 'targets.md'), 'utf8'))) throw new Error('targets.md wording changed');
+  return `@tailwindcss/node@${pkg.version}: hardcoded targets safari 16.1 / ios 16.1 / firefox 128 / chrome 111, zero browserslist references`;
+});
+
 await claim('C2', 'SKILL.md frontmatter is valid for agent-skill discovery', async () => {
   const fm = skill.match(/^---\n([\s\S]*?)\n---\n/);
   if (!fm) throw new Error('no frontmatter');
