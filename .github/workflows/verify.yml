@@ -7,15 +7,22 @@ on:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # README claims "Node >= 18": run it rather than assert it.
+        node: [18, 20, 22]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: ${{ matrix.node }}
       # Dataset + behaviour only. Network checks (E1-E5, E7-E9, C4) are skipped:
       # GitHub code search, Bundlephobia and unpkg rate-limit, and a flaky red badge
       # is worse than an honest local run of `node scripts/verify-claims.mjs`.
+      - name: Node version
+        run: node -v
       - name: Self-check (no network)
         run: node scripts/audit.mjs --selfcheck
       - name: Claim checks (offline)
