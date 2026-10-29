@@ -96,6 +96,12 @@ Feature statuses age from *Limited* to *Newly* to *Widely* (30 months after land
 
 `data/mappings.json` is generated from [e18e/module-replacements](https://github.com/e18e/module-replacements) by `scripts/sync-mappings.mjs`, then enriched from `data/overrides.json` (hand-written keep-signals, polyfill costs, notes). 328 packages, 326 with a Baseline feature. `--selfcheck` fails if any row references a feature id that no longer exists, and rows without keep-signal analysis are never reported as `swap`.
 
+## Evidence
+
+- [`docs/verification.md`](docs/verification.md) — 27 machine checks, re-runnable with `node scripts/verify-claims.mjs`. Every number in this README is recomputed or re-fetched there.
+- [`docs/benchmarks/`](docs/benchmarks/) — two benchmark runs against real projects, both hand-verified. The 2026-10-29 run found **zero clean swaps** in four apps and 432 dependencies; it was published as a negative result because the rule was fixed before the run.
+- [`docs/competitive-landscape.md`](docs/competitive-landscape.md) — what already exists, what it covers, and what this adds.
+
 ## What this does not do
 
 - It does not migrate your code, or prove a swap behaves identically.
