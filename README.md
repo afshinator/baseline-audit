@@ -12,7 +12,7 @@ Read-only by design: it never edits your project and never writes a browserslist
 # install: clone into an agent skills directory
 git clone https://github.com/afshinator/baseline-audit.git ~/.agents/skills/baseline-audit
 
-# verify it works (124 invariants, no network)
+# verify it works (self-check: hundreds of assertions, no network)
 node ~/.agents/skills/baseline-audit/scripts/audit.mjs --selfcheck
 
 # or run it directly, without an agent
@@ -68,15 +68,15 @@ Plus a usage section naming the file and call that blocks each drop, a watchlist
 
 With no browserslist config the audit assumes Baseline-Widely targets and marks the report `[ASSUMED]`. That is not the same as "safe for your users", and it also means the audience column adds nothing beyond the Baseline column.
 
-The gate changes a verdict only when a project declares a browser floor **older** than the feature's own support version. Measured against the 45 mapped packages that have feature data:
+The gate changes a verdict only when a project declares a browser floor **older** than the feature's own support version. Measured against the 326 mapped packages that carry feature data (290 of them pass Baseline-Widely):
 
 | Project floor | Rows whose verdict differs from a Baseline-Widely run |
 |---|---|
-| Baseline-Widely (chrome 124 / ios 17.4) | 0 of 45 — the gate is a no-op by construction |
-| chrome 100 / safari 15 (2023-era) | 11 of 45 |
-| chrome 87 / safari 14 (2021-era) | 11 of 45 (the same rows) |
+| Baseline-Widely (chrome 124 / ios 17.4) | 0 of 326 — the gate is a no-op by construction |
+| chrome 100 / safari 15 (2023-era) | 26 of 326 |
+| chrome 87 / safari 14 (2021-era) | 31 of 326 |
 
-The 11: `axios`, `a11y-dialog`, `focus-trap`, `focus-trap-react`, `body-scroll-lock`, `react-modal`, `@radix-ui/react-dialog`, `lodash.clonedeep`, `clone-deep`, `lodash.groupby`, `smoothscroll-polyfill`.
+The rows that can flip are the recently-landed APIs: array/object helpers (`Object.groupBy`, `Array.prototype.at/findLast`), `<dialog>`-based packages (`a11y-dialog`, `focus-trap`, `react-modal`, `@radix-ui/react-dialog`), `axios` (AbortSignal.timeout), `lodash.clonedeep`/`clone-deep`, `lodash.groupby` and friends.
 
 So the honest claim is narrow: **this tool prevents wrong swaps for projects with a declared legacy floor.** For a project with no config, or one at Baseline-Widely, the gate cannot change anything — and the report should be read as "safe for Baseline-Widely targets", nothing more. Empirically that is most projects: of 30 public repos probed on 2026-10-28 (32 attempted; 2 have no root `package.json`), 6 declared a browserslist config at all (2 in `package.json`, 4 in `.browserslistrc`), and only `jellyfin/jellyfin-web` declared a genuinely legacy floor. The rest either declared nothing or declared something permissive.
 
@@ -94,13 +94,13 @@ node scripts/audit.mjs --selfcheck                              # re-validate af
 
 Feature statuses age from *Limited* to *Newly* to *Widely* (30 months after landing), so a stale snapshot quietly under-reports available swaps. The staleness warning is deliberately in the script rather than in CI: every consumer — clone, fork, agent — sees it, whereas a scheduled workflow would not reach them (and GitHub disables scheduled workflows in public repos after 60 days of inactivity, and in forks by default).
 
-`data/mappings.json` is hand-curated and decays faster than the feature data. It holds 48 package → feature mappings with keep-signals and polyfill costs. `--selfcheck` fails if any row references a feature id that no longer exists.
+`data/mappings.json` is generated from [e18e/module-replacements](https://github.com/e18e/module-replacements) by `scripts/sync-mappings.mjs`, then enriched from `data/overrides.json` (hand-written keep-signals, polyfill costs, notes). 328 packages, 326 with a Baseline feature. `--selfcheck` fails if any row references a feature id that no longer exists, and rows without keep-signal analysis are never reported as `swap`.
 
 ## What this does not do
 
 - It does not migrate your code, or prove a swap behaves identically.
 - It does not measure your real bundle. Sizes are Bundlephobia's published package size; tree-shaking makes your actual cost lower. Confirm with a bundle analyzer before claiming a win.
-- It does not invent replacements. 48 packages are mapped; anything else is reported as unmapped rather than guessed.
+- It does not invent replacements. 328 packages are mapped from the e18e manifest; a package outside it is reported as unmapped rather than guessed. Only 48 of those rows have hand-written keep-signal analysis here, and the rest can never be reported as a clean `swap`.
 - It does not run on a schedule. Nothing does. Run it deliberately, ideally quarterly.
 
 ## Limitations worth knowing

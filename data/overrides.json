@@ -1,0 +1,608 @@
+{
+  "schema": 1,
+  "note": "Hand-maintained enrichments. sync-mappings.mjs merges these onto the e18e manifest. keep_if drives the usage analysis; rows without it are reported as check, never swap.",
+  "packages": {
+    "timeago.js": {
+      "cluster": "intl",
+      "replacement": "Intl.RelativeTimeFormat",
+      "feature_ids": [
+        "intl-relative-time-format"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "Library picked the unit for you; you write the arithmetic.",
+      "partial": false
+    },
+    "pluralize": {
+      "cluster": "intl",
+      "replacement": "Intl.PluralRules",
+      "feature_ids": [
+        "intl-plural-rules"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "Singularisation of arbitrary words is not covered; plural selection is.",
+      "partial": false
+    },
+    "numeral": {
+      "cluster": "intl",
+      "replacement": "Intl.NumberFormat",
+      "feature_ids": [
+        "intl"
+      ],
+      "keep_if": [
+        "\\bnumeral\\.(locale|reset|zeroFormat|defaultFormat)"
+      ],
+      "polyfill": null,
+      "note": "Intl.NumberFormat has no global locale/format switching API.",
+      "partial": true
+    },
+    "humanize-duration": {
+      "cluster": "intl",
+      "replacement": "Intl.DurationFormat",
+      "feature_ids": [
+        "intl-duration-format"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "Rounding/largest-unit logic is yours to write.",
+      "partial": false
+    },
+    "axios": {
+      "cluster": "http",
+      "replacement": "fetch + AbortSignal.timeout",
+      "feature_ids": [
+        "fetch",
+        "abortsignal-timeout"
+      ],
+      "keep_if": [
+        "interceptors",
+        "onUploadProgress",
+        "\\bupload\\b",
+        "validateStatus",
+        "axios\\.(create|all|spread|CancelToken|isCancel)",
+        "responseType: *['\"](blob|arraybuffer)"
+      ],
+      "polyfill": null,
+      "note": "HTTP errors resolve, not reject. Interceptors, retries, upload progress have no fetch equivalent.",
+      "partial": false
+    },
+    "superagent": {
+      "cluster": "http",
+      "replacement": "fetch",
+      "feature_ids": [
+        "fetch"
+      ],
+      "keep_if": [
+        "\\.attach\\(",
+        "\\.on\\(['\"]progress",
+        "\\.retry\\(",
+        "\\.timeout\\("
+      ],
+      "polyfill": null,
+      "note": "Upload progress and retries are real gaps.",
+      "partial": false
+    },
+    "node-fetch": {
+      "cluster": "http",
+      "replacement": "global fetch",
+      "feature_ids": [
+        "fetch"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "Only if the code runs in a browser; keep for Node.",
+      "partial": false
+    },
+    "cross-fetch": {
+      "cluster": "http",
+      "replacement": "global fetch",
+      "feature_ids": [
+        "fetch"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "whatwg-fetch": {
+      "cluster": "http",
+      "replacement": "global fetch",
+      "feature_ids": [
+        "fetch"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "Polyfill for browsers below Baseline; drop only if targets allow.",
+      "partial": false
+    },
+    "isomorphic-fetch": {
+      "cluster": "http",
+      "replacement": "global fetch",
+      "feature_ids": [
+        "fetch"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "a11y-dialog": {
+      "cluster": "ui",
+      "replacement": "<dialog> + showModal()",
+      "feature_ids": [
+        "dialog"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "Focus trap, Escape, inert background and focus return come free.",
+      "partial": false
+    },
+    "focus-trap": {
+      "cluster": "ui",
+      "replacement": "<dialog> modal semantics",
+      "feature_ids": [
+        "dialog"
+      ],
+      "keep_if": [
+        "createFocusTrap",
+        "allowOutsideClick"
+      ],
+      "polyfill": null,
+      "note": "Focus traps outside dialogs are not covered.",
+      "partial": false
+    },
+    "focus-trap-react": {
+      "cluster": "ui",
+      "replacement": "<dialog> modal semantics",
+      "feature_ids": [
+        "dialog"
+      ],
+      "keep_if": [
+        "createFocusTrap",
+        "allowOutsideClick"
+      ],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "body-scroll-lock": {
+      "cluster": "ui",
+      "replacement": "body:has(dialog:modal) { overflow: hidden }",
+      "feature_ids": [
+        "dialog"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "CSS :has + :modal, not JS.",
+      "partial": false
+    },
+    "tippy.js": {
+      "cluster": "ui",
+      "replacement": "Popover API + CSS anchor positioning",
+      "feature_ids": [
+        "popover",
+        "anchor-positioning"
+      ],
+      "keep_if": [
+        "followCursor",
+        "trigger: *['\"]click",
+        "render\\(",
+        "onShow",
+        "onHide"
+      ],
+      "polyfill": null,
+      "note": "Bundles Popper. Anchor positioning is the weaker half: no position-try parity everywhere.",
+      "partial": false
+    },
+    "@tippyjs/react": {
+      "cluster": "ui",
+      "replacement": "Popover API + CSS anchor positioning",
+      "feature_ids": [
+        "popover",
+        "anchor-positioning"
+      ],
+      "keep_if": [
+        "followCursor",
+        "trigger: *['\"]click",
+        "render\\("
+      ],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "@popperjs/core": {
+      "cluster": "ui",
+      "replacement": "CSS anchor positioning",
+      "feature_ids": [
+        "anchor-positioning"
+      ],
+      "keep_if": [
+        "autoUpdate",
+        "flip\\(",
+        "shift\\(",
+        "preventOverflow"
+      ],
+      "polyfill": null,
+      "note": "JS-driven repositioning (autoUpdate, virtual elements) has no CSS equivalent yet.",
+      "partial": false
+    },
+    "popper.js": {
+      "cluster": "ui",
+      "replacement": "CSS anchor positioning",
+      "feature_ids": [
+        "anchor-positioning"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "@floating-ui/dom": {
+      "cluster": "ui",
+      "replacement": "CSS anchor positioning",
+      "feature_ids": [
+        "anchor-positioning"
+      ],
+      "keep_if": [
+        "autoUpdate",
+        "virtual",
+        "flip\\(",
+        "shift\\("
+      ],
+      "polyfill": null,
+      "note": "Genuine parity gap for dynamic/virtual positioning.",
+      "partial": false
+    },
+    "@floating-ui/react": {
+      "cluster": "ui",
+      "replacement": "CSS anchor positioning",
+      "feature_ids": [
+        "anchor-positioning"
+      ],
+      "keep_if": [
+        "autoUpdate",
+        "virtual",
+        "flip\\(",
+        "shift\\("
+      ],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "react-modal": {
+      "cluster": "ui",
+      "replacement": "<dialog>",
+      "feature_ids": [
+        "dialog"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "React state plumbing still needed; the DOM behaviour is native.",
+      "partial": false
+    },
+    "react-tooltip": {
+      "cluster": "ui",
+      "replacement": "Popover API + anchor positioning",
+      "feature_ids": [
+        "popover",
+        "anchor-positioning"
+      ],
+      "keep_if": [
+        "followCursor",
+        "isOpen"
+      ],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "microtip": {
+      "cluster": "ui",
+      "replacement": "Popover API",
+      "feature_ids": [
+        "popover"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "@radix-ui/react-dialog": {
+      "cluster": "ui",
+      "replacement": "<dialog>",
+      "feature_ids": [
+        "dialog"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "Not drop-in: Radix owns animation state and the component anatomy.",
+      "partial": true
+    },
+    "@radix-ui/react-popover": {
+      "cluster": "ui",
+      "replacement": "Popover API + anchor positioning",
+      "feature_ids": [
+        "popover",
+        "anchor-positioning"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "Not drop-in; collision handling still comes from Radix/Floating UI.",
+      "partial": true
+    },
+    "@radix-ui/react-tooltip": {
+      "cluster": "ui",
+      "replacement": "Popover API + anchor positioning",
+      "feature_ids": [
+        "popover",
+        "anchor-positioning"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "Not drop-in.",
+      "partial": true
+    },
+    "radix-ui": {
+      "cluster": "ui",
+      "replacement": "mixed primitives (<dialog>, popover, anchor positioning)",
+      "feature_ids": [
+        "dialog",
+        "popover",
+        "anchor-positioning"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "Umbrella package: per-import decisions, verifier must read the imports.",
+      "partial": true
+    },
+    "lodash": {
+      "cluster": "utils",
+      "replacement": "Object.groupBy, structuredClone, Set methods (partial)",
+      "feature_ids": [
+        "array-group",
+        "structured-clone",
+        "set-methods"
+      ],
+      "keep_if": [
+        "debounce",
+        "throttle",
+        "isEqual",
+        "\\.merge\\(",
+        "\\.get\\(|\\bset\\(",
+        "cloneDeep"
+      ],
+      "polyfill": null,
+      "note": "Only the covered helpers are replaceable; debounce/throttle/isEqual stay.",
+      "partial": true
+    },
+    "lodash.clonedeep": {
+      "cluster": "utils",
+      "replacement": "structuredClone",
+      "feature_ids": [
+        "structured-clone"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "structuredClone throws on functions and drops class prototypes.",
+      "partial": false
+    },
+    "clone-deep": {
+      "cluster": "utils",
+      "replacement": "structuredClone",
+      "feature_ids": [
+        "structured-clone"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "lodash.groupby": {
+      "cluster": "utils",
+      "replacement": "Object.groupBy / Map.groupBy",
+      "feature_ids": [
+        "array-group"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "lodash.uniq": {
+      "cluster": "utils",
+      "replacement": "new Set(array)",
+      "feature_ids": [
+        "set-methods"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "lodash.union": {
+      "cluster": "utils",
+      "replacement": "Set.prototype.union",
+      "feature_ids": [
+        "set-methods"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "lodash.intersection": {
+      "cluster": "utils",
+      "replacement": "Set.prototype.intersection",
+      "feature_ids": [
+        "set-methods"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "lodash.difference": {
+      "cluster": "utils",
+      "replacement": "Set.prototype.difference",
+      "feature_ids": [
+        "set-methods"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "lodash.debounce": {
+      "cluster": "utils",
+      "replacement": "none",
+      "feature_ids": [],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "No platform equivalent. Keep.",
+      "partial": false
+    },
+    "lodash.throttle": {
+      "cluster": "utils",
+      "replacement": "none",
+      "feature_ids": [],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "No platform equivalent. Keep.",
+      "partial": false
+    },
+    "moment": {
+      "cluster": "date",
+      "replacement": "Temporal",
+      "feature_ids": [
+        "temporal"
+      ],
+      "keep_if": [],
+      "polyfill": "@js-temporal/polyfill",
+      "note": "Polyfill must be weighed against the library; usually a net add today.",
+      "partial": false
+    },
+    "dayjs": {
+      "cluster": "date",
+      "replacement": "Temporal",
+      "feature_ids": [
+        "temporal"
+      ],
+      "keep_if": [],
+      "polyfill": "@js-temporal/polyfill",
+      "note": "Polyfill is ~15x the gzipped size of dayjs. Watchlist, not a swap.",
+      "partial": false
+    },
+    "luxon": {
+      "cluster": "date",
+      "replacement": "Temporal",
+      "feature_ids": [
+        "temporal"
+      ],
+      "keep_if": [],
+      "polyfill": "@js-temporal/polyfill",
+      "note": "Same polyfill math problem.",
+      "partial": false
+    },
+    "date-fns": {
+      "cluster": "date",
+      "replacement": "partial: Intl.RelativeTimeFormat for formatDistance/formatRelative",
+      "feature_ids": [
+        "intl-relative-time-format"
+      ],
+      "keep_if": [
+        "differenceIn",
+        "addDays",
+        "subDays",
+        "startOf",
+        "endOf",
+        "parseISO"
+      ],
+      "polyfill": null,
+      "note": "Broad utility lib; only the relative-format helpers map cleanly.",
+      "partial": true
+    },
+    "uuid": {
+      "cluster": "misc",
+      "replacement": "crypto.randomUUID()",
+      "feature_ids": [],
+      "keep_if": [
+        "v1\\(",
+        "v3\\(",
+        "v5\\("
+      ],
+      "polyfill": null,
+      "note": "No Baseline feature entry in web-features for crypto.randomUUID; verify support manually before swapping.",
+      "partial": true
+    },
+    "resize-observer-polyfill": {
+      "cluster": "misc",
+      "replacement": "ResizeObserver",
+      "feature_ids": [
+        "resize-observer"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "intersection-observer": {
+      "cluster": "misc",
+      "replacement": "IntersectionObserver",
+      "feature_ids": [
+        "intersection-observer"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "smoothscroll-polyfill": {
+      "cluster": "misc",
+      "replacement": "CSS scroll-behavior",
+      "feature_ids": [
+        "scroll-behavior"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    },
+    "query-string": {
+      "cluster": "misc",
+      "replacement": "URLSearchParams",
+      "feature_ids": [
+        "url"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "Nested-object serialisation is not covered.",
+      "partial": false
+    },
+    "qs": {
+      "cluster": "misc",
+      "replacement": "URLSearchParams",
+      "feature_ids": [
+        "url"
+      ],
+      "keep_if": [
+        "depth",
+        "allowDots",
+        "arrayFormat"
+      ],
+      "polyfill": null,
+      "note": "Only flat query strings map cleanly.",
+      "partial": true
+    },
+    "left-pad": {
+      "cluster": "misc",
+      "replacement": "String.prototype.padStart",
+      "feature_ids": [
+        "string-pad"
+      ],
+      "keep_if": [],
+      "polyfill": null,
+      "note": "",
+      "partial": false
+    }
+  }
+}

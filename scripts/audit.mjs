@@ -270,6 +270,7 @@ for (const entry of MAPPINGS) {
   else if (blocked) verdict = 'blocked';
   else if (net != null && net <= 0) verdict = 'blocked-cost';
   else if (unknown) verdict = 'unverified';
+  else if (entry.usage_analyzed === false) verdict = 'check';
   else if (entry.partial || signals.length) verdict = 'check';
   else verdict = 'swap';
 
@@ -328,6 +329,11 @@ if (watch.length) {
   out.push('');
   out.push('## Watchlist (do not swap yet)');
   for (const w of watch) out.push(`- **${w.pkg}** → ${w.replacement}: ${w.why || 'insufficient Baseline support'}. Revisit ${w.revisit}.`);
+}
+if (rows.some(r => r.entry.usage_analyzed === false)) {
+  out.push('');
+  out.push('## No usage analysis for these (never reported as swap)');
+  out.push(rows.filter(r => r.entry.usage_analyzed === false).map(r => `\`${r.entry.package}\``).join(', ') + ' — mapped from the e18e manifest, but this repo has no keep-signal list for them. Check how you call them before swapping.');
 }
 if (rows.some(r => r.importSites === 0)) {
   out.push('');

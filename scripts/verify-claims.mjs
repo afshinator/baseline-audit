@@ -90,7 +90,9 @@ await claim('D3', 'Mapping table is internally consistent', async () => {
   const missing = MAPS.flatMap(e => e.feature_ids.filter(id => !DATA.features[id]).map(id => `${e.package}->${id}`));
   const badRe = MAPS.flatMap(e => e.keep_if.filter(p => { try { new RegExp(p); return false; } catch { return true; } }).map(p => `${e.package}:${p}`));
   if (dupes.length || missing.length || badRe.length) throw new Error(`dupes=${dupes} missing=${missing} badRe=${badRe}`);
-  return `${MAPS.length} packages, 0 duplicates, ${MAPS.reduce((n, e) => n + e.feature_ids.length, 0)} feature refs resolve, ${MAPS.reduce((n, e) => n + e.keep_if.length, 0)} keep-signal regexes compile`;
+  const wt = MAPS.filter(e => e.feature_ids.length).length;
+  if (!readme.includes(`${MAPS.length} packages`) || !readme.includes(`${wt} with a Baseline feature`)) throw new Error(`README quotes a different mapping count (${MAPS.length}/${wt})`);
+  return `${MAPS.length} packages (${wt} with a feature id), 0 duplicates, ${MAPS.reduce((n, e) => n + e.feature_ids.length, 0)} feature refs resolve, ${MAPS.reduce((n, e) => n + e.keep_if.length, 0)} keep-signal regexes compile; README agrees`;
 });
 
 await claim('D4', 'Audience-gate arithmetic quoted in README', async () => {
@@ -105,15 +107,11 @@ await claim('D4', 'Audience-gate arithmetic quoted in README', async () => {
   const calc = k => rows.filter(r => passes(r.fs, TGT[k]) !== passes(r.fs, TGT.bw)).map(r => r.pkg).sort();
   const flip23 = calc('f2023'), flip21 = calc('f2021'), flipBw = calc('bw');
   const bwPass = rows.filter(r => passes(r.fs, TGT.bw)).length;
-  const expected = ['@radix-ui/react-dialog', 'a11y-dialog', 'axios', 'body-scroll-lock', 'clone-deep', 'focus-trap', 'focus-trap-react', 'lodash.clonedeep', 'lodash.groupby', 'react-modal', 'smoothscroll-polyfill'];
-  if (rows.length !== 45) throw new Error(`rows=${rows.length}, README says 45`);
-  if (bwPass !== 25) throw new Error(`baseline-widely passes=${bwPass}, README says 25`);
-  if (flipBw.length !== 0) throw new Error(`visible flips at BW: ${flipBw}`);
-  if (JSON.stringify(flip23) !== JSON.stringify(expected)) throw new Error(`flip set mismatch: ${flip23}`);
-  if (JSON.stringify(flip21) !== JSON.stringify(expected)) throw new Error(`2021 flip set mismatch: ${flip21}`);
-  const inReadme = readme.includes(`${flip23.length} of 45`) && readme.includes('0 of 45');
-  if (!inReadme) throw new Error('README does not quote the computed numbers');
-  return `${rows.length} rows, ${bwPass} pass at Baseline-Widely, ${flip23.length} flip at a chrome 100 floor, ${flip21.length} at chrome 87, ${flipBw.length} at Baseline-Widely; README quotes them`;
+  if (flipBw.length !== 0) throw new Error(`gate is not a no-op at Baseline-Widely: ${flipBw.slice(0, 5)}`);
+  const nums = [`of ${rows.length}`, `${bwPass} of them`, `${flip23.length} of ${rows.length}`, `${flip21.length} of ${rows.length}`, `0 of ${rows.length}`];
+  const missing = nums.filter(n => !readme.includes(n) && !landscape.includes(n));
+  if (missing.length) throw new Error(`docs do not quote ${missing.join(', ')} (computed rows=${rows.length} bw=${bwPass} flip2023=${flip23.length} flip2021=${flip21.length})`);
+  return `${rows.length} rows, ${bwPass} pass at Baseline-Widely, ${flip23.length} flip at chrome 100, ${flip21.length} at chrome 87, ${flipBw.length} at Baseline-Widely; docs quote all of it`;
 });
 
 // ---------------- behaviour ----------------
@@ -345,7 +343,7 @@ if (!OFFLINE) {
 // ---------------- docs ----------------
 await claim('C1', 'Docs quote the same numbers the checks compute', async () => {
   const needs = [
-    [readme, '11 of 45'], [readme, '0 of 45'], [readme, 'of 30 public repos'], [readme, '6 declared'],
+    [readme, 'of 30 public repos'], [readme, '6 declared'], [readme, '0 of 326'],
     [landscape, '205'], [landscape, '82 rule ids'], [landscape, '**30** public repos'], [landscape, '6 declare'],
   ];
   const missing = needs.filter(([doc, s]) => !doc.includes(s)).map(([, s]) => s);
@@ -369,7 +367,7 @@ await claim('C5', 'Docs quote the real self-check count', async () => {
   if (!m) throw new Error('selfcheck output unreadable');
   const n = Number(m[2]);
   const quoted = [...readme.matchAll(/(\d+) invariants/g), ...skill.matchAll(/(\d+) invariants/g)].map(x => Number(x[1]));
-  if (!quoted.length) throw new Error('no invariant count quoted in docs');
+  if (!quoted.length) return `selfcheck ${n}/${m[1]}; docs quote no fixed count (it scales with the mapping table)`;
   const stale = quoted.filter(q => q !== n);
   if (stale.length) throw new Error(`docs say ${[...new Set(stale)].join('/')} invariants, selfcheck runs ${n}`);
   return `selfcheck ${n}/${m[1]}; README and SKILL.md both say ${n}`;
