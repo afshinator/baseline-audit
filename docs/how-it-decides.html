@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>How baseline-audit decides</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #0f1115;
+    --dim: #5b6472;
+    --faint: #8a929e;
+    --line: #e3e7ec;
+    --rail: #d7dce3;
+    --code: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    --swap: #0f7b4f;      --swap-bg: #e8f6ee;      --swap-br: #b6e2c8;
+    --check: #1f5fbf;     --check-bg: #e9f1fd;     --check-br: #bcd3f5;
+    --blocked: #b4232b;   --blocked-bg: #fdeceb;   --blocked-br: #f3c4c1;
+    --cost: #6b3fa0;      --cost-bg: #f2ecfb;      --cost-br: #d6c6ef;
+    --unver: #96650b;     --unver-bg: #fdf3e1;     --unver-br: #f0d8ab;
+    --keep: #4a5361;      --keep-bg: #f1f3f6;      --keep-br: #d8dde4;
+  }
+  html[data-theme="dark"] {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --dim: #9aa4b2;
+    --faint: #7d8695;
+    --line: #232a33;
+    --rail: #2d3540;
+    --swap: #4ade80;      --swap-bg: #10231a;      --swap-br: #1d4d33;
+    --check: #7aa7ff;     --check-bg: #101b2b;     --check-br: #24406b;
+    --blocked: #ff8b84;   --blocked-bg: #261213;   --blocked-br: #5c2523;
+    --cost: #c4a2f5;      --cost-bg: #1c1526;      --cost-br: #462f66;
+    --unver: #e8bb62;     --unver-bg: #221a0c;     --unver-br: #5b4415;
+    --keep: #9ba6b4;      --keep-bg: #161b22;      --keep-br: #2a323c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); }
+  body {
+    width: 980px;
+    padding: 34px 40px 30px;
+    font-family: var(--sans);
+    color: var(--fg);
+    -webkit-font-smoothing: antialiased;
+  }
+  header { margin-bottom: 26px; }
+  .eyebrow {
+    font: 600 11px/1 var(--code);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: 25px;
+    line-height: 1.15;
+    letter-spacing: -.02em;
+    margin: 0 0 7px;
+    font-weight: 650;
+  }
+  .sub { font-size: 13.5px; color: var(--dim); margin: 0; }
+  .sub b { color: var(--fg); font-weight: 600; }
+
+  .ladder { position: relative; }
+  .row {
+    display: grid;
+    grid-template-columns: 30px 1fr 178px;
+    gap: 0 16px;
+    align-items: center;
+    padding: 0 0 20px;
+    position: relative;
+  }
+  .row:last-child { padding-bottom: 0; }
+  .row::before {
+    content: "";
+    position: absolute;
+    left: 14px; top: 30px; bottom: -22px;
+    width: 2px;
+    background: var(--rail);
+  }
+  .row:last-child::before { display: none; }
+  .step {
+    width: 29px; height: 29px;
+    border-radius: 50%;
+    border: 1.5px solid var(--rail);
+    background: var(--bg);
+    display: grid; place-items: center;
+    font: 600 12px/1 var(--code);
+    color: var(--dim);
+    position: relative; z-index: 1;
+    align-self: start;
+    margin-top: 1px;
+  }
+  .row.decisive .step { border-color: var(--swap-br); color: var(--swap); }
+  .q {
+    font: 600 15px/1.35 var(--code);
+    letter-spacing: -.01em;
+    margin: 0 0 4px;
+  }
+  .why { font-size: 12.5px; line-height: 1.45; color: var(--dim); margin: 0; }
+  .why code {
+    font: 12px var(--code);
+    color: var(--fg);
+    background: var(--keep-bg);
+    border: 1px solid var(--line);
+    padding: 1px 4px;
+    border-radius: 4px;
+  }
+  .arrow {
+    display: grid;
+    grid-template-columns: 26px 128px;
+    gap: 9px;
+    align-items: center;
+    justify-content: end;
+  }
+  .arrow .lbl {
+    font: 500 13px/1 var(--code);
+    color: var(--faint);
+    text-align: right;
+  }
+  .chip {
+    text-align: center;
+    font: 600 12.5px/1 var(--code);
+    letter-spacing: -.01em;
+    padding: 7px 10px;
+    border-radius: 7px;
+    border: 1.5px solid transparent;
+    white-space: nowrap;
+  }
+  .swap-c    { color: var(--swap);    background: var(--swap-bg);    border-color: var(--swap-br); }
+  .check-c   { color: var(--check);   background: var(--check-bg);   border-color: var(--check-br); }
+  .blocked-c { color: var(--blocked); background: var(--blocked-bg); border-color: var(--blocked-br); }
+  .cost-c    { color: var(--cost);    background: var(--cost-bg);    border-color: var(--cost-br); }
+  .unver-c   { color: var(--unver);   background: var(--unver-bg);   border-color: var(--unver-br); }
+  .keep-c    { color: var(--keep);    background: var(--keep-bg);    border-color: var(--keep-br); }
+  .row.decisive .chip { font-size: 13.5px; padding: 9px 12px; }
+
+  footer {
+    margin-top: 26px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    font: 11.5px/1.7 var(--code);
+    color: var(--faint);
+  }
+  footer span { color: var(--dim); }
+</style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">baseline-audit</div>
+    <h1>How it decides</h1>
+    <p class="sub">Each package falls through these rungs in order. <b>First match wins</b>, so a package never gets further than the first thing that blocks it.</p>
+  </header>
+
+  <div class="ladder">
+    <div class="row">
+      <div class="step">1</div>
+      <div>
+        <p class="q">mapped to a native replacement?</p>
+        <p class="why">No entry in <code>data/mappings.json</code>. The tool has no opinion.</p>
+      </div>
+      <div class="arrow"><span class="lbl">no</span><span class="chip keep-c">keep</span></div>
+    </div>
+
+    <div class="row">
+      <div class="step">2</div>
+      <div>
+        <p class="q">every target ≥ feature support?</p>
+        <p class="why">Any browser in your target set is older than the platform feature.</p>
+      </div>
+      <div class="arrow"><span class="lbl">no</span><span class="chip blocked-c">blocked</span></div>
+    </div>
+
+    <div class="row">
+      <div class="step">3</div>
+      <div>
+        <p class="q">library gzip − polyfill gzip &gt; 0?</p>
+        <p class="why">The polyfill is not cheaper than the library. Skipped when sizes are unmeasured.</p>
+      </div>
+      <div class="arrow"><span class="lbl">no</span><span class="chip cost-c">blocked-cost</span></div>
+    </div>
+
+    <div class="row">
+      <div class="step">4</div>
+      <div>
+        <p class="q">any comparable engine in targets?</p>
+        <p class="why">Every gate came back unknown. Establish real targets first.</p>
+      </div>
+      <div class="arrow"><span class="lbl">no</span><span class="chip unver-c">unverified</span></div>
+    </div>
+
+    <div class="row">
+      <div class="step">5</div>
+      <div>
+        <p class="q">usage analysed for this package?</p>
+        <p class="why">Mapped from the e18e manifest, but no keep-signal list exists for it.</p>
+      </div>
+      <div class="arrow"><span class="lbl">no</span><span class="chip check-c">check</span></div>
+    </div>
+
+    <div class="row">
+      <div class="step">6</div>
+      <div>
+        <p class="q">partial, or keep-signal found?</p>
+        <p class="why">Native covers only part of it, or a <code>keep_if</code> hit in an importer, including one hop through a re-export.</p>
+      </div>
+      <div class="arrow"><span class="lbl">yes</span><span class="chip check-c">check</span></div>
+    </div>
+
+    <div class="row decisive">
+      <div class="step">7</div>
+      <div>
+        <p class="q">otherwise</p>
+        <p class="why">Baseline-safe against your targets, and nothing in your code uses the gap.</p>
+      </div>
+      <div class="arrow"><span class="lbl"></span><span class="chip swap-c">swap</span></div>
+    </div>
+  </div>
+
+  <footer>
+    <span>gates read</span> web-features support floors &nbsp;·&nbsp; bundlephobia gzip −
+    overrides polyfill &nbsp;·&nbsp; <span>keep_if</span> regex over importers (+1 hop)
+  </footer>
+
+<script>
+  if (location.search.includes('theme=dark')) document.documentElement.dataset.theme = 'dark';
+</script>
+</body>
+</html>

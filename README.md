@@ -64,6 +64,13 @@ Plus a usage section naming the file and call that blocks each drop, a watchlist
 2. **What does the swap cost?** If the polyfill outweighs the library, the bundle gets bigger. This is why `dayjs → Temporal` shows a −41.1K net today.
 3. **Does the platform cover how I actually use it?** `fetch` has no interceptors, retries, or upload progress. `structuredClone` throws on functions. A grep for the specific API surface decides this row.
 
+They run in a fixed order, and the first rung that fails decides the verdict — which is why a package can be `blocked` even though it is also cheap to drop:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/how-it-decides-dark.png">
+  <img alt="Decision ladder, first match wins. Rung 1: mapped to a native replacement? No leads to keep. Rung 2: every target at or above feature support? No leads to blocked. Rung 3: library gzip minus polyfill gzip above zero? No leads to blocked-cost. Rung 4: any comparable engine in the target set? No leads to unverified. Rung 5: usage analysed for this package? No leads to check. Rung 6: partial replacement, or a keep-signal found? Yes leads to check. Rung 7: otherwise, swap." src="docs/how-it-decides-light.png">
+</picture>
+
 ## Targets are the input that matters — and often a no-op
 
 With no browserslist config the audit assumes Baseline-Widely targets and marks the report `[ASSUMED]`. That is not the same as "safe for your users", and it also means the audience column adds nothing beyond the Baseline column.
